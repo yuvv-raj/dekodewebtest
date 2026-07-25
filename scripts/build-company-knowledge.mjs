@@ -1,10 +1,11 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const sourceRoot = resolve(projectRoot, '..', 'Dekode');
 const outputFile = resolve(projectRoot, 'src', 'knowledge', 'companyKnowledge.json');
+const optional = process.argv.includes('--optional');
 
 const sourceFiles = {
   about: resolve(sourceRoot, 'src', 'pages', 'About.jsx'),
@@ -13,6 +14,39 @@ const sourceFiles = {
   delivery: resolve(sourceRoot, 'src', 'components', 'DeliveryFlow.jsx'),
   contact: resolve(sourceRoot, 'src', 'pages', 'Contact.jsx'),
 };
+
+const missingSourceFiles = [];
+
+await Promise.all(
+  Object.values(sourceFiles).map(async (path) => {
+    try {
+      await access(path);
+    } catch {
+      missingSourceFiles.push(path);
+    }
+  }),
+);
+
+if (missingSourceFiles.length > 0) {
+  if (!optional) {
+    throw new Error(
+      `Missing DEKODE source files:\n${missingSourceFiles.map((path) => `- ${path}`).join('\n')}`,
+    );
+  }
+
+  try {
+    await access(outputFile);
+  } catch {
+    throw new Error(
+      `Missing DEKODE source files and no committed knowledge file exists at ${outputFile}`,
+    );
+  }
+
+  console.warn(
+    `DEKODE source files are unavailable; using existing ${outputFile} for this build.`,
+  );
+  process.exit(0);
+}
 
 const entries = Object.fromEntries(
   await Promise.all(

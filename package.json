@@ -6,8 +6,10 @@
   "scripts": {
     "dev": "vite",
     "knowledge:build": "node scripts/build-company-knowledge.mjs",
+    "knowledge:build:optional": "node scripts/build-company-knowledge.mjs --optional",
     "prebuild": "npm run knowledge:build",
     "build": "vite build && node scripts/prepare-sites-build.mjs",
+    "build:vercel": "npm run knowledge:build:optional && vite build",
     "lint": "oxlint",
     "test": "node --test tests/*.test.js",
     "preview": "vite preview"
