@@ -2,9 +2,17 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Calendar, CheckCircle2, Bot, Mic } from 'lucide-react';
 import AnimationPanel from './AnimationPanel';
+import CompanyKnowledgePanel from './CompanyKnowledgePanel';
 import ParticleBackground from './ParticleBackground';
 import TypewriterText from './TypewriterText';
 import { extractDomain, detectTone, extractTag, getTypingDelay, generateAudienceResponse, generateTimelineResponse, isTooVague, detectPlatform, generateCustomPlatformQuestion, generateCustomComplexityQuestion } from '../utils/chatIntelligence';
+import {
+  classifyCompanyIntent,
+  createCompanyConversationContext,
+  generateCompanyResponse,
+  leaveCompanyConversation,
+  rememberCompanyTurn,
+} from '../knowledge';
 
 const PROJECT_OPTIONS = [
   'Mobile App',
@@ -26,8 +34,10 @@ export default function ChatApp() {
   const [projectType, setProjectType] = useState(null);
   const [gatheredTags, setGatheredTags] = useState([]);
   const [chatContext, setChatContext] = useState({ projectType: null, domain: null, tone: 'neutral' });
+  const [companyPanel, setCompanyPanel] = useState(null);
   
   const scrollRef = useRef(null);
+  const companyContextRef = useRef(createCompanyConversationContext());
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -35,17 +45,20 @@ export default function ChatApp() {
     }
   }, [messages, isTyping, step, isListening]);
 
-  const simulateAiTyping = (text) => {
+  const simulateAiTyping = (text, metadata = {}) => {
     setIsTyping(true);
     const delay = getTypingDelay(text);
     setTimeout(() => {
       setIsTyping(false);
-      setMessages((prev) => [...prev, { id: Date.now(), sender: 'ai', text }]);
+      setMessages((prev) => [...prev, { id: Date.now(), sender: 'ai', text, ...metadata }]);
     }, delay);
   };
 
-  const startConversation = (initialMessage) => {
-    setMessages([{ id: Date.now(), sender: 'user', text: initialMessage }]);
+  const startConversation = (initialMessage, preserveHistory = false) => {
+    const userEntry = { id: Date.now(), sender: 'user', text: initialMessage };
+    setMessages((prev) => preserveHistory ? [...prev, userEntry] : [userEntry]);
+    setCompanyPanel(null);
+    companyContextRef.current = leaveCompanyConversation(companyContextRef.current);
     
     const matchedOption = PROJECT_OPTIONS.find(opt => opt === initialMessage || initialMessage.includes(opt));
     const finalProjectType = matchedOption || 'Custom Project';
@@ -82,6 +95,26 @@ export default function ChatApp() {
     startConversation(option);
   };
 
+  const handleCompanyPrompt = (userMessage) => {
+    if (!userMessage.trim() || isTyping) return;
+
+    const intent = classifyCompanyIntent(userMessage, companyContextRef.current);
+    const response = generateCompanyResponse(userMessage, {
+      ...intent,
+      isCompanyRelated: true,
+      topic: intent.topic || companyContextRef.current.lastTopic || 'company',
+    });
+
+    setMessages((prev) => [...prev, { id: Date.now(), sender: 'user', text: userMessage }]);
+    if (step === 'centered') setStep('company');
+    companyContextRef.current = rememberCompanyTurn(companyContextRef.current, response.topic);
+    setCompanyPanel(response);
+    simulateAiTyping(response.text, {
+      companyTopic: response.topic,
+      suggestions: response.suggestions,
+    });
+  };
+
   const handleSendMessage = (e) => {
     e.preventDefault();
     if (!inputValue.trim()) return;
@@ -94,11 +127,24 @@ export default function ChatApp() {
     const userMessage = inputValue;
     setInputValue('');
 
+    const companyIntent = classifyCompanyIntent(userMessage, companyContextRef.current);
+    if (companyIntent.isCompanyRelated) {
+      handleCompanyPrompt(userMessage);
+      return;
+    }
+
     if (step === 'centered') {
       startConversation(userMessage);
       return;
     }
 
+    if (step === 'company') {
+      startConversation(userMessage, true);
+      return;
+    }
+
+    setCompanyPanel(null);
+    companyContextRef.current = leaveCompanyConversation(companyContextRef.current);
     setMessages((prev) => [...prev, { id: Date.now(), sender: 'user', text: userMessage }]);
 
     // Custom Project Flow
@@ -216,7 +262,7 @@ export default function ChatApp() {
       <div className="anim-header">
         <span className="anim-title">
           <Bot size={16} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'text-bottom' }} /> 
-          Building Context
+          {companyPanel ? 'Company Knowledge' : 'Building Context'}
         </span>
         <div style={{ display: 'flex', gap: '4px' }}>
           <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444' }}></span>
@@ -227,6 +273,18 @@ export default function ChatApp() {
       
       {/* Requirement Tags & Progress Bar */}
       <div className="anim-body-container" style={{ padding: '1rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+        {companyPanel ? (
+          <motion.div
+            key={companyPanel.topic}
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="knowledge-topic-label"
+          >
+            <span className="knowledge-live-dot" />
+            {companyPanel.topic === 'why' ? 'Why DEKODE' : companyPanel.topic}
+          </motion.div>
+        ) : (
+          <>
         {/* Progress Tracker */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative' }}>
           <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: '2px', background: 'rgba(255,255,255,0.1)', zIndex: 0 }} />
@@ -259,11 +317,17 @@ export default function ChatApp() {
             ))}
           </AnimatePresence>
         </div>
+          </>
+        )}
       </div>
 
       <div className="anim-content">
         <div className="anim-scale-wrapper">
-          <AnimationPanel projectType={projectType} level={getAnimationLevel()} />
+          {companyPanel ? (
+            <CompanyKnowledgePanel panel={companyPanel.panel} onSelect={handleCompanyPrompt} />
+          ) : (
+            <AnimationPanel projectType={projectType} level={getAnimationLevel()} />
+          )}
         </div>
       </div>
     </motion.div>
@@ -357,6 +421,25 @@ export default function ChatApp() {
                           )
                         ) : (
                           msg.text
+                        )}
+                        {msg.sender === 'ai' && msg.suggestions?.length > 0 && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2 }}
+                            className="company-suggestion-chips"
+                          >
+                            {msg.suggestions.map((suggestion) => (
+                              <button
+                                key={suggestion.label}
+                                type="button"
+                                onClick={() => handleCompanyPrompt(suggestion.prompt)}
+                                disabled={isTyping}
+                              >
+                                {suggestion.label}
+                              </button>
+                            ))}
+                          </motion.div>
                         )}
                       </div>
                     </motion.div>

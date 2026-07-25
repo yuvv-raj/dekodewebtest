@@ -1,0 +1,285 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "repository": "website/DEKODE",
+    "files": [
+      "src/pages/About.jsx",
+      "src/pages/Services.jsx",
+      "src/pages/Home.jsx",
+      "src/components/DeliveryFlow.jsx",
+      "src/pages/Contact.jsx"
+    ],
+    "generatedAt": "2026-07-25T10:48:58.750Z"
+  },
+  "company": {
+    "name": "DEKODE",
+    "about": "DEKODE helps businesses and communities modernise their systems, adopt AI with confidence, and build digital products that teams actually want to use. We handle the complexity so you don’t have to: from strategy and architecture through to build, security, and long-term support.",
+    "mission": "We make technology work for the people who use it.",
+    "vision": "DEKODE is building toward becoming a trusted global technology partner for businesses navigating that shift. Our goal is simple: make digital transformation and AI adoption accessible, affordable, and genuinely useful for the people it’s meant to serve.",
+    "belief": "Progress only counts when it reaches everyone."
+  },
+  "services": [
+    {
+      "id": "ai-strategy",
+      "name": "AI Strategy & Consulting",
+      "summary": "Most businesses know AI matters. Fewer know where to start. We help you cut through the noise, identify the use cases that will actually move the needle, and build a roadmap grounded in your real data, workflows, and goals. Not hype.",
+      "capabilities": [
+        "AI readiness assessment and opportunity mapping",
+        "Use case selection, ROI logic, and prioritisation",
+        "Data and workflow review to determine what's needed to make AI work",
+        "Responsible AI guidance covering privacy, safety, and governance",
+        "Vendor-neutral tool and platform recommendations"
+      ],
+      "audience": "Businesses exploring AI for the first time, or those who’ve tried and need a clearer direction."
+    },
+    {
+      "id": "custom-ai",
+      "name": "Custom AI Development",
+      "summary": "Build AI that fits your business. Not the other way around. Off-the-shelf AI rarely solves the specific problems your team faces every day. We design and develop custom AI solutions, from machine learning models to generative AI features, that plug directly into your operations and deliver measurable results.",
+      "capabilities": [
+        "Custom AI and machine learning development",
+        "Generative AI solutions tailored to your workflows",
+        "Internal copilots, intelligent search, and knowledge systems",
+        "AI-powered support, sales enablement, and operations tools",
+        "From proof-of-concept to production-grade deployment"
+      ],
+      "audience": "Businesses with a specific problem or idea that needs purpose-built AI to solve it."
+    },
+    {
+      "id": "web-mobile",
+      "name": "Web & Mobile Development",
+      "summary": "Build apps and interfaces that people actually want to use. A powerful system means nothing if your team can’t navigate it. We design and develop web apps, mobile apps, dashboards, and internal tools with user experience at the centre, so adoption happens naturally, not by force.",
+      "capabilities": [
+        "Web application development",
+        "iOS and Android mobile apps",
+        "UX/UI design: user journeys, wireframes, prototypes, and design systems",
+        "Dashboards and internal portals for operations, visibility, and decision-making",
+        "Rapid prototyping through to production-ready delivery"
+      ],
+      "audience": "Businesses building a new digital product, or modernising existing tools that teams have outgrown."
+    },
+    {
+      "id": "ecommerce",
+      "name": "AI-Powered E-Commerce Development",
+      "summary": "Smarter shopping experiences that convert and scale. E-commerce is no longer just a storefront. It’s a system of recommendations, personalisation, search intelligence, and automation. We build e-commerce platforms with AI woven in from the ground up, so your customers get better experiences and your operations run leaner.",
+      "capabilities": [
+        "AI-powered e-commerce platform development",
+        "Personalised product recommendations and intelligent search",
+        "Automated inventory, pricing, and fulfilment workflows",
+        "Performance and UX optimisation",
+        "Scalable architecture built for growth"
+      ],
+      "audience": "Retailers and brands launching or upgrading their online presence with AI-driven competitive advantage."
+    },
+    {
+      "id": "integrations",
+      "name": "Integrations & Automation",
+      "summary": "Connect your tools. Automate the repetitive work. Free your team to focus. Most businesses run on a patchwork of systems that don’t talk to each other. We connect your stack, build custom integrations, and automate the manual processes that slow your team down, so information flows cleanly and work gets done faster.",
+      "capabilities": [
+        "Payment gateway integrations",
+        "Chat, text, and email integrations",
+        "Custom API development and third-party connections",
+        "DevOps pipelines and CI/CD setup",
+        "Business process automation across operations, finance, and support"
+      ],
+      "audience": "Businesses drowning in manual workflows, disconnected platforms, or fragile integrations that keep breaking."
+    },
+    {
+      "id": "cloud-it",
+      "name": "Cloud, Managed IT & Security",
+      "summary": "Secure, scalable foundations, with someone watching the systems so you don’t have to. Everything we build runs on infrastructure that’s designed for reliability, cost efficiency, and long-term maintainability. We handle cloud strategy, migration, day-to-day IT management, and security hardening as one connected service. Not separate line items from separate teams.",
+      "capabilities": [
+        "Cloud consulting and migration across AWS, Azure, and Google Cloud Platform",
+        "Infrastructure architecture, monitoring, and incident readiness",
+        "Identity and access management, data protection, and encryption",
+        "Security posture reviews, threat modelling, and risk reduction",
+        "Ongoing managed IT support, patching, and performance optimisation"
+      ],
+      "audience": "Businesses that need their systems to be stable, secure, and professionally managed, without building a full in-house IT team."
+    }
+  ],
+  "industries": [
+    "education",
+    "healthcare",
+    "finance",
+    "accounting",
+    "legal",
+    "food and agriculture",
+    "retail"
+  ],
+  "technologies": [
+    "AWS",
+    "Azure",
+    "Google Cloud Platform"
+  ],
+  "capabilities": [
+    "AI readiness assessment and opportunity mapping",
+    "Use case selection, ROI logic, and prioritisation",
+    "Data and workflow review to determine what's needed to make AI work",
+    "Responsible AI guidance covering privacy, safety, and governance",
+    "Vendor-neutral tool and platform recommendations",
+    "Custom AI and machine learning development",
+    "Generative AI solutions tailored to your workflows",
+    "Internal copilots, intelligent search, and knowledge systems",
+    "AI-powered support, sales enablement, and operations tools",
+    "From proof-of-concept to production-grade deployment",
+    "Web application development",
+    "iOS and Android mobile apps",
+    "UX/UI design: user journeys, wireframes, prototypes, and design systems",
+    "Dashboards and internal portals for operations, visibility, and decision-making",
+    "Rapid prototyping through to production-ready delivery",
+    "AI-powered e-commerce platform development",
+    "Personalised product recommendations and intelligent search",
+    "Automated inventory, pricing, and fulfilment workflows",
+    "Performance and UX optimisation",
+    "Scalable architecture built for growth",
+    "Payment gateway integrations",
+    "Chat, text, and email integrations",
+    "Custom API development and third-party connections",
+    "DevOps pipelines and CI/CD setup",
+    "Business process automation across operations, finance, and support",
+    "Cloud consulting and migration across AWS, Azure, and Google Cloud Platform",
+    "Infrastructure architecture, monitoring, and incident readiness",
+    "Identity and access management, data protection, and encryption",
+    "Security posture reviews, threat modelling, and risk reduction",
+    "Ongoing managed IT support, patching, and performance optimisation"
+  ],
+  "whyChooseUs": [],
+  "values": [
+    {
+      "name": "Practical AI, not hype",
+      "description": "Focused on outcomes your team can actually use"
+    },
+    {
+      "name": "UI that drives adoption",
+      "description": "Interfaces built for clarity, speed, and real workflows"
+    },
+    {
+      "name": "Simple by default",
+      "description": "Clear communication, clean scope, no jargon"
+    },
+    {
+      "name": "Security-first",
+      "description": "Governance and protection embedded from day one"
+    },
+    {
+      "name": "Sustainable foundations",
+      "description": "Maintainable systems and cost-aware infrastructure"
+    },
+    {
+      "name": "Long-term partner mindset",
+      "description": "Build it, run it, improve it"
+    }
+  ],
+  "developmentProcess": [
+    {
+      "name": "Discover",
+      "description": "Align on goals, users, constraints, workflows, and actionable quick wins."
+    },
+    {
+      "name": "Design",
+      "description": "Define solution architecture, UI/UX flows, delivery plan, and success measures."
+    },
+    {
+      "name": "Build",
+      "description": "Implement, integrate, test, and document logic so it’s production-ready."
+    },
+    {
+      "name": "Secure",
+      "description": "Embed privacy, access control, IT governance, and hardening from day one."
+    },
+    {
+      "name": "Run & Optimise",
+      "description": "Support what we ship, monitor system performance, iterate, and optimise."
+    }
+  ],
+  "contact": {
+    "email": "contactus@dekodeglobal.com",
+    "phone": "+61421196363"
+  },
+  "faqs": [
+    {
+      "question": "What does DEKODE do?",
+      "answer": "DEKODE combines AI consultancy, solution development, infrastructure, security, and long-term support to deliver practical systems teams can adopt."
+    },
+    {
+      "question": "Who does DEKODE work with?",
+      "answer": "DEKODE partners with small and medium businesses across education, healthcare, finance, accounting, legal, food and agriculture, retail."
+    },
+    {
+      "question": "How does DEKODE deliver projects?",
+      "answer": "DEKODE follows five stages: Discover, Design, Build, Secure, Run & Optimise."
+    }
+  ],
+  "aliases": {
+    "ai": [
+      "artificial intelligence",
+      "machine learning",
+      "ml",
+      "generative ai",
+      "genai",
+      "llm",
+      "copilot",
+      "agent",
+      "agents"
+    ],
+    "services": [
+      "service",
+      "offer",
+      "offering",
+      "solutions",
+      "build",
+      "capabilities"
+    ],
+    "industries": [
+      "industry",
+      "industries",
+      "sector",
+      "sectors",
+      "clients",
+      "customers",
+      "work with"
+    ],
+    "technologies": [
+      "technology",
+      "technologies",
+      "tech",
+      "tech stack",
+      "stack",
+      "platforms",
+      "tools"
+    ],
+    "process": [
+      "process",
+      "method",
+      "methodology",
+      "workflow",
+      "delivery",
+      "how you work",
+      "approach"
+    ],
+    "why": [
+      "why choose",
+      "different",
+      "difference",
+      "values",
+      "culture",
+      "principles"
+    ],
+    "company": [
+      "dekode",
+      "company",
+      "business",
+      "who are you",
+      "about you",
+      "what do you do"
+    ],
+    "contact": [
+      "contact",
+      "email",
+      "phone",
+      "get in touch",
+      "reach you"
+    ]
+  }
+}

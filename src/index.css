@@ -337,6 +337,7 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: 16px;
   font-size: 0.95rem; /* Reduced slightly from 1.05rem */
   line-height: 1.5; /* Slightly tighter line height to match smaller font */
+  white-space: pre-line;
 }
 
 .message-ai .message-bubble {
@@ -405,6 +406,309 @@ h1, h2, h3, h4, h5, h6 {
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+/* Company knowledge layer: extends the existing glass panel */
+.knowledge-topic-label {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: #93c5fd;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.knowledge-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #22c55e;
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.8);
+}
+
+.company-knowledge-panel {
+  width: 100%;
+  height: 100%;
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.knowledge-panel-button,
+.tech-badge,
+.ai-graph-core,
+.ai-graph-node {
+  color: white;
+  font-family: var(--font-primary);
+  cursor: pointer;
+}
+
+.knowledge-panel-button {
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.055);
+  border-radius: 12px;
+  padding: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  text-align: left;
+  min-width: 0;
+}
+
+.knowledge-panel-button:hover {
+  background: rgba(53,118,193,0.22);
+  border-color: rgba(96,165,250,0.42);
+}
+
+.knowledge-panel-button span {
+  min-width: 0;
+}
+
+.knowledge-panel-button strong,
+.knowledge-panel-button small {
+  display: block;
+}
+
+.knowledge-panel-button small {
+  color: rgba(255,255,255,0.58);
+  font-size: 0.65rem;
+  line-height: 1.35;
+  margin-top: 0.2rem;
+}
+
+.knowledge-card-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.services-panel-grid .knowledge-panel-button {
+  min-height: 70px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  font-size: 0.72rem;
+}
+
+.industry-panel-grid .knowledge-panel-button {
+  font-size: 0.72rem;
+  padding: 0.65rem;
+}
+
+.knowledge-timeline {
+  width: 100%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.knowledge-timeline::before {
+  content: '';
+  position: absolute;
+  left: 15px;
+  top: 18px;
+  bottom: 18px;
+  width: 1px;
+  background: linear-gradient(#3576c1, rgba(53,118,193,0.12));
+}
+
+.timeline-card {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 0.35rem;
+}
+
+.timeline-index {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #163d68;
+  color: #93c5fd;
+  font-size: 0.58rem;
+  position: relative;
+  z-index: 1;
+}
+
+.tech-orbit {
+  width: 100%;
+  height: 280px;
+  position: relative;
+}
+
+.tech-orbit::before,
+.tech-orbit::after {
+  content: '';
+  position: absolute;
+  inset: 38px 22px;
+  border: 1px solid rgba(96,165,250,0.18);
+  border-radius: 50%;
+}
+
+.tech-orbit::after {
+  inset: 74px 62px;
+}
+
+.tech-orbit-core {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  color: #93c5fd;
+  font-size: 0.65rem;
+}
+
+.tech-badge {
+  position: absolute;
+  border: 1px solid rgba(96,165,250,0.28);
+  background: rgba(15,23,42,0.9);
+  border-radius: 999px;
+  padding: 0.4rem 0.65rem;
+  font-size: 0.63rem;
+}
+
+.tech-badge:nth-of-type(1) { top: 10%; left: 6%; }
+.tech-badge:nth-of-type(2) { top: 7%; right: 7%; }
+.tech-badge:nth-of-type(3) { top: 39%; right: 0; }
+.tech-badge:nth-of-type(4) { bottom: 12%; right: 6%; }
+.tech-badge:nth-of-type(5) { bottom: 4%; left: 34%; }
+.tech-badge:nth-of-type(6) { bottom: 19%; left: 0; }
+.tech-badge:nth-of-type(7) { top: 37%; left: 0; }
+
+.process-panel {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.process-step-card {
+  min-height: 42px;
+  padding: 0.45rem 0.65rem;
+  font-size: 0.72rem;
+}
+
+.process-step-number {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: rgba(53,118,193,0.35);
+  color: #93c5fd;
+  font-size: 0.65rem;
+}
+
+.process-connector {
+  width: 1px;
+  height: 8px;
+  margin-left: 20px;
+  background: rgba(96,165,250,0.45);
+}
+
+.why-panel {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.why-panel .knowledge-panel-button svg {
+  flex: 0 0 auto;
+  color: #22c55e;
+}
+
+.ai-knowledge-graph {
+  width: 300px;
+  height: 270px;
+  position: relative;
+}
+
+.ai-graph-core,
+.ai-graph-node {
+  position: absolute;
+  border: 1px solid rgba(96,165,250,0.36);
+  background: rgba(15,23,42,0.94);
+  z-index: 2;
+}
+
+.ai-graph-core {
+  left: 50%;
+  top: 50%;
+  width: 72px;
+  height: 72px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #93c5fd;
+}
+
+.ai-graph-node {
+  border-radius: 999px;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.62rem;
+}
+
+.ai-node-1 { left: 4%; top: 10%; }
+.ai-node-2 { right: 3%; top: 10%; }
+.ai-node-3 { right: 0; top: 56%; }
+.ai-node-4 { right: 16%; bottom: 3%; }
+.ai-node-5 { left: 4%; bottom: 13%; }
+
+.ai-graph-line {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 105px;
+  height: 1px;
+  background: rgba(96,165,250,0.3);
+  transform-origin: left center;
+  z-index: 1;
+}
+
+.ai-line-1 { transform: rotate(218deg); }
+.ai-line-2 { transform: rotate(322deg); }
+.ai-line-3 { transform: rotate(8deg); }
+.ai-line-4 { transform: rotate(63deg); }
+.ai-line-5 { transform: rotate(145deg); }
+
+.company-suggestion-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.9rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.company-suggestion-chips button {
+  border: 1px solid rgba(96,165,250,0.25);
+  background: rgba(53,118,193,0.15);
+  color: #bfdbfe;
+  border-radius: 999px;
+  padding: 0.38rem 0.62rem;
+  font: inherit;
+  font-size: 0.68rem;
+  cursor: pointer;
+}
+
+.company-suggestion-chips button:hover {
+  background: rgba(53,118,193,0.3);
 }
 
 /* Animations Content */

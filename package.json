@@ -5,8 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "knowledge:build": "node scripts/build-company-knowledge.mjs",
+    "prebuild": "npm run knowledge:build",
+    "build": "vite build && node scripts/prepare-sites-build.mjs",
     "lint": "oxlint",
+    "test": "node --test tests/*.test.js",
     "preview": "vite preview"
   },
   "dependencies": {
