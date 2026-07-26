@@ -41,7 +41,15 @@ test('keeps the composer responsive with rotating hints and separate voice typin
   assert.match(chatApp, /Start voice typing/);
   assert.match(chatApp, /Stop voice typing/);
   assert.match(chatApp, /BrowserSpeechToTextProvider/);
-  assert.doesNotMatch(chatApp, /<DekodeVoiceEntry/);
+  assert.match(chatApp, /<DekodeVoiceEntry compact onClick=\{handleOpenDekodeVoice\}/);
+  assert.match(chatApp, /const handleOpenDekodeVoice = \(\) =>/);
+  assert.match(chatApp, /onClick=\{handleSpeech\}/);
+  assert.doesNotMatch(chatApp, /<DekodeVoiceEntry onClick=/);
   assert.match(indexCss, /\.hero-title\s*\{[^}]*font-size:\s*clamp\(2\.25rem,\s*4\.25vw,\s*3\.5rem\)/s);
   assert.match(indexCss, /\.chat-mic-btn\s*\{[^}]*width:\s*44px[^}]*height:\s*44px/s);
+});
+
+test('pauses rotating hints for active voice typing states', () => {
+  assert.match(chatApp, /\['requesting', 'listening', 'processing'\]\.includes\(voiceTypingState\)/);
+  assert.match(chatApp, /data-state=\{voiceTypingState\}/);
 });

@@ -253,6 +253,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .chat-mic-btn:focus-visible,
+.dekode-voice-entry:focus-visible,
 .chat-submit-btn:focus-visible {
   outline: 2px solid var(--color-brand-yellow);
   outline-offset: 2px;
@@ -1029,6 +1030,7 @@ h1, h2, h3, h4, h5, h6 {
   .chat-input-form { gap: 0.25rem; }
   .chat-input { padding: 0.75rem 0.35rem; font-size: 1rem; }
   .rotating-placeholder { left: 0.35rem; font-size: 1rem; }
+  .dekode-voice-entry.is-compact { flex: 0 0 44px; }
   .chat-mic-btn { flex-basis: 44px; }
   .chat-submit-btn { flex: 0 0 44px; margin-right: 0; }
 

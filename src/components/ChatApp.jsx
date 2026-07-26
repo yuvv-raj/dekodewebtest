@@ -5,6 +5,7 @@ import AnimationPanel from './AnimationPanel';
 import CompanyKnowledgePanel from './CompanyKnowledgePanel';
 import ParticleBackground from './ParticleBackground';
 import TypewriterText from './TypewriterText';
+import DekodeVoiceEntry from './voice/DekodeVoiceEntry';
 import DekodeVoiceSession from './voice/DekodeVoiceSession';
 import { voiceConfig } from '../voice/config';
 import { BrowserSpeechToTextProvider } from '../voice/providers/browserSpeechToTextProvider';
@@ -35,6 +36,7 @@ export default function ChatApp() {
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [voiceStatus, setVoiceStatus] = useState('');
+  const [voiceTypingState, setVoiceTypingState] = useState('idle');
   
   // States: 'centered' (hero), 'active' (chatting)
   const [step, setStep] = useState('centered'); 
@@ -62,14 +64,15 @@ export default function ChatApp() {
 
   useEffect(() => {
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-    if (isInputFocused || inputValue || reduceMotion.matches) return undefined;
+    const voiceTypingActive = ['requesting', 'listening', 'processing'].includes(voiceTypingState);
+    if (isInputFocused || inputValue || voiceTypingActive || reduceMotion.matches) return undefined;
 
     const intervalId = window.setInterval(() => {
       setPlaceholderIndex((current) => (current + 1) % placeholderMessages.length);
     }, placeholderInterval);
 
     return () => window.clearInterval(intervalId);
-  }, [isInputFocused, inputValue]);
+  }, [isInputFocused, inputValue, voiceTypingState]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -171,6 +174,7 @@ export default function ChatApp() {
     if (isListening) {
       speechProviderRef.current?.stop();
       setIsListening(false);
+      setVoiceTypingState('idle');
       setVoiceStatus('');
     }
 
@@ -301,6 +305,7 @@ export default function ChatApp() {
   const handleSpeech = async () => {
     const provider = speechProviderRef.current;
     if (!provider?.isSupported()) {
+      setVoiceTypingState('unsupported');
       showVoiceStatus('Voice typing is not supported in this browser.');
       return;
     }
@@ -308,10 +313,12 @@ export default function ChatApp() {
     if (isListening) {
       provider.stop();
       setIsListening(false);
+      setVoiceTypingState('stopped');
       showVoiceStatus('Voice typing stopped.');
       return;
     }
 
+    setVoiceTypingState('requesting');
     showVoiceStatus('Requesting microphone access…', true);
     try {
       await provider.requestPermission();
@@ -322,6 +329,7 @@ export default function ChatApp() {
           setInputValue(prefix ? `${prefix} ${transcript}` : transcript);
         },
         onFinal: (transcript) => {
+          setVoiceTypingState('processing');
           const prefix = committedTranscriptRef.current;
           const nextValue = prefix ? `${prefix} ${transcript}` : transcript;
           committedTranscriptRef.current = nextValue;
@@ -329,17 +337,21 @@ export default function ChatApp() {
         },
         onError: (error) => {
           setIsListening(false);
+          setVoiceTypingState('error');
           showVoiceStatus(formatRecognitionError(error));
         },
         onEnd: () => {
           setIsListening(false);
+          setVoiceTypingState('idle');
           setVoiceStatus((current) => current === 'Listening…' ? '' : current);
         },
       });
       setIsListening(true);
+      setVoiceTypingState('listening');
       showVoiceStatus('Listening…', true);
     } catch (error) {
       setIsListening(false);
+      setVoiceTypingState('error');
       showVoiceStatus(formatRecognitionError(error));
     }
   };
@@ -378,11 +390,22 @@ export default function ChatApp() {
       className={`chat-mic-btn ${isListening ? 'is-listening' : ''}`}
       aria-label={isListening ? 'Stop voice typing' : 'Start voice typing'}
       aria-pressed={isListening}
+      data-state={voiceTypingState}
       disabled={disabled}
       title={isListening ? 'Stop voice typing' : 'Start voice typing'}
     >
       <Mic size={19} />
     </button>
+  );
+
+  const handleOpenDekodeVoice = () => {
+    setIsVoiceOpen(true);
+  };
+
+  const renderDekodeVoiceButton = () => (
+    voiceConfig.enabled
+      ? <DekodeVoiceEntry compact onClick={handleOpenDekodeVoice} />
+      : null
   );
 
   const handleComposerKeyDown = (event) => {
@@ -535,6 +558,7 @@ export default function ChatApp() {
             
             <div className="input-container">
               <form className="chat-input-form" onSubmit={handleSendMessage}>
+                {renderDekodeVoiceButton()}
                 {renderComposerInput()}
                 {renderVoiceTypingButton()}
                 <button
@@ -653,6 +677,7 @@ export default function ChatApp() {
               <div className="chat-input-wrapper">
                 <div className="input-container active-mode">
                   <form className="chat-input-form" onSubmit={handleSendMessage}>
+                    {renderDekodeVoiceButton()}
                     {renderComposerInput({ readOnly: step === 'scheduling' || step === 'done' })}
                     {renderVoiceTypingButton(step === 'scheduling' || step === 'done')}
                     <button
