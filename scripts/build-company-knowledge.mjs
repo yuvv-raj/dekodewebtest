@@ -135,7 +135,7 @@ const knowledge = {
   source: {
     repository: 'website/DEKODE',
     files: Object.values(sourceFiles).map((path) => path.slice(sourceRoot.length + 1).replaceAll('\\', '/')),
-    generatedAt: new Date().toISOString(),
+    generatedAt: 'build-time',
   },
   company: {
     name: 'DEKODE',
