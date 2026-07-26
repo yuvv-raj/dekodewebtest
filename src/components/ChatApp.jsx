@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Calendar, CheckCircle2, Bot, Mic } from 'lucide-react';
+import { Send, Calendar, CheckCircle2, Bot, Mic, ChevronDown } from 'lucide-react';
 import AnimationPanel from './AnimationPanel';
 import CompanyKnowledgePanel from './CompanyKnowledgePanel';
 import ParticleBackground from './ParticleBackground';
@@ -39,6 +39,8 @@ export default function ChatApp() {
   const [chatContext, setChatContext] = useState({ projectType: null, domain: null, tone: 'neutral' });
   const [companyPanel, setCompanyPanel] = useState(null);
   const [isVoiceOpen, setIsVoiceOpen] = useState(false);
+  const [isVisualPanelExpanded, setIsVisualPanelExpanded] = useState(false);
+  const [isCompactLayout, setIsCompactLayout] = useState(() => window.matchMedia('(max-width: 1180px)').matches);
   
   const scrollRef = useRef(null);
   const companyContextRef = useRef(createCompanyConversationContext());
@@ -48,6 +50,23 @@ export default function ChatApp() {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, isTyping, step, isListening]);
+
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 1180px)');
+    const updateLayoutMode = (event) => setIsCompactLayout(event.matches);
+    media.addEventListener('change', updateLayoutMode);
+    return () => media.removeEventListener('change', updateLayoutMode);
+  }, []);
+
+  useEffect(() => {
+    const constrainedHeight = window.matchMedia('(max-height: 640px)');
+    const collapseForKeyboardOrLandscape = (event) => {
+      if (event.matches) setIsVisualPanelExpanded(false);
+    };
+    collapseForKeyboardOrLandscape(constrainedHeight);
+    constrainedHeight.addEventListener('change', collapseForKeyboardOrLandscape);
+    return () => constrainedHeight.removeEventListener('change', collapseForKeyboardOrLandscape);
+  }, []);
 
   const simulateAiTyping = (text, metadata = {}) => {
     setIsTyping(true);
@@ -247,6 +266,13 @@ export default function ChatApp() {
     recognition.start();
   };
 
+  const handleComposerKeyDown = (event) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      event.currentTarget.form?.requestSubmit();
+    }
+  };
+
   const handleVoiceTurn = ({ userText, assistantText, response }) => {
     const turnId = Date.now();
     setMessages((prev) => [
@@ -273,22 +299,33 @@ export default function ChatApp() {
     return 0;
   };
 
-  const renderAnimationCard = (classNameExt) => (
+  const renderAnimationCard = (classNameExt = '') => (
     <motion.div 
       initial={{ x: 100, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       transition={{ delay: 0.3, duration: 0.6, type: 'spring', damping: 20 }}
-      className={`floating-animation-panel ${classNameExt}`}
+      className={`floating-animation-panel ${classNameExt} ${isVisualPanelExpanded ? 'visual-panel-expanded' : 'visual-panel-collapsed'}`}
     >
       <div className="anim-header">
         <span className="anim-title">
           <Bot size={16} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'text-bottom' }} /> 
           {companyPanel ? 'Company Knowledge' : 'Building Context'}
         </span>
-        <div style={{ display: 'flex', gap: '4px' }}>
-          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444' }}></span>
-          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#eab308' }}></span>
-          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22c55e' }}></span>
+        <div className="anim-header-actions">
+          <div className="anim-window-dots" aria-hidden="true">
+            <span></span><span></span><span></span>
+          </div>
+          <button
+            type="button"
+            className="visual-panel-toggle"
+            onClick={() => setIsVisualPanelExpanded((expanded) => !expanded)}
+            aria-expanded={isVisualPanelExpanded}
+            aria-controls="supporting-visual-content"
+            aria-label={isVisualPanelExpanded ? 'Collapse supporting visual' : 'Expand supporting visual'}
+          >
+            <span>{isVisualPanelExpanded ? 'Collapse' : 'Expand'}</span>
+            <ChevronDown size={18} />
+          </button>
         </div>
       </div>
       
@@ -342,7 +379,12 @@ export default function ChatApp() {
         )}
       </div>
 
-      <div className="anim-content">
+      <div
+        className="anim-content"
+        id="supporting-visual-content"
+        aria-hidden={isCompactLayout && !isVisualPanelExpanded}
+        inert={isCompactLayout && !isVisualPanelExpanded ? true : undefined}
+      >
         <div className="anim-scale-wrapper">
           {companyPanel ? (
             <CompanyKnowledgePanel panel={companyPanel.panel} onSelect={handleCompanyPrompt} />
@@ -374,7 +416,7 @@ export default function ChatApp() {
             
             <div className="input-container">
               <form className="chat-input-form" onSubmit={handleSendMessage}>
-                <div style={{ display: 'flex', alignItems: 'center', background: 'transparent', padding: '0 0.5rem' }}>
+                <div className="chat-voice-control">
                   {voiceConfig.enabled ? (
                     <DekodeVoiceEntry compact onClick={() => setIsVoiceOpen(true)} />
                   ) : (
@@ -388,12 +430,13 @@ export default function ChatApp() {
                     <div className="waveform-bar"></div><div className="waveform-bar"></div><div className="waveform-bar"></div><div className="waveform-bar"></div><div className="waveform-bar"></div>
                   </div>
                 ) : (
-                  <input
-                    type="text"
+                  <textarea
+                    rows="1"
                     className="chat-input"
                     placeholder="Ask Dekode to build..."
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
+                    onKeyDown={handleComposerKeyDown}
                     autoFocus
                   />
                 )}
@@ -425,9 +468,6 @@ export default function ChatApp() {
             className="active-chat-layout"
           >
             <div className="chat-section">
-              {/* FIXED ANIMATION FOR MOBILE */}
-              {renderAnimationCard('mobile-only')}
-
               <div className="chat-scroll-area" ref={scrollRef}>
                 <AnimatePresence>
                   {messages.map((msg, idx) => (
@@ -487,7 +527,7 @@ export default function ChatApp() {
                 )}
 
                 {step === 'scheduling' && !isTyping && (
-                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ marginTop: '1rem', width: '85%' }}>
+                  <motion.div className="schedule-card-wrapper" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                     <div style={{ padding: '1.5rem', background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(12px)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: 'white', fontWeight: 600 }}>
                         <Calendar size={20} /> Select a Discovery Call Time
@@ -513,7 +553,7 @@ export default function ChatApp() {
               <div className="chat-input-wrapper">
                 <div className="input-container active-mode">
                   <form className="chat-input-form" onSubmit={handleSendMessage}>
-                    <div style={{ display: 'flex', alignItems: 'center', background: 'transparent', padding: '0 0.5rem' }}>
+                    <div className="chat-voice-control">
                       {voiceConfig.enabled ? (
                         <DekodeVoiceEntry compact onClick={() => setIsVoiceOpen(true)} />
                       ) : (
@@ -527,12 +567,13 @@ export default function ChatApp() {
                         <div className="waveform-bar"></div><div className="waveform-bar"></div><div className="waveform-bar"></div><div className="waveform-bar"></div><div className="waveform-bar"></div>
                       </div>
                     ) : (
-                      <input
-                        type="text"
+                      <textarea
+                        rows="1"
                         className="chat-input"
                         placeholder={step === 'done' ? "Chat finished" : "Type your message..."}
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
+                        onKeyDown={handleComposerKeyDown}
                         readOnly={step === 'scheduling' || step === 'done'}
                       />
                     )}
@@ -548,8 +589,7 @@ export default function ChatApp() {
               </div>
             </div>
             
-            {/* Pop-up Side Animation FOR DESKTOP */}
-            {renderAnimationCard('desktop-only')}
+            {renderAnimationCard('responsive-visual-panel')}
 
           </motion.div>
         )}

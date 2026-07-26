@@ -33,6 +33,7 @@ body {
   overflow: hidden; /* Prevent scrolling on body, app handles it */
   line-height: 1.6;
   background-color: #0f172a; /* Fallback dark */
+  min-width: 0;
 }
 
 /* Beautiful Animated Mesh Gradient Background (Dekode Brand - More Yellow) */
@@ -66,10 +67,13 @@ h1, h2, h3, h4, h5, h6 {
 
 /* App Container */
 #root {
-  width: 100vw;
+  width: 100%;
   height: 100vh;
+  height: 100svh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
+  overflow: clip;
 }
 
 .app-container {
@@ -77,6 +81,8 @@ h1, h2, h3, h4, h5, h6 {
   width: 100%;
   height: 100%;
   position: relative;
+  min-width: 0;
+  min-height: 0;
 }
 
 /* Layout States */
@@ -87,8 +93,11 @@ h1, h2, h3, h4, h5, h6 {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
+  padding: max(2rem, env(safe-area-inset-top)) max(2rem, env(safe-area-inset-right)) max(2rem, env(safe-area-inset-bottom)) max(2rem, env(safe-area-inset-left));
   z-index: 10;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .active-chat-layout {
@@ -96,6 +105,8 @@ h1, h2, h3, h4, h5, h6 {
   width: 100%;
   height: 100%;
   z-index: 10;
+  min-width: 0;
+  min-height: 0;
 }
 
 .chat-section {
@@ -106,6 +117,8 @@ h1, h2, h3, h4, h5, h6 {
   max-width: 800px;
   margin: 0 auto;
   position: relative;
+  min-width: 0;
+  min-height: 0;
 }
 
 /* Logo */
@@ -162,6 +175,14 @@ h1, h2, h3, h4, h5, h6 {
   display: flex;
   gap: 1rem;
   align-items: center;
+  min-width: 0;
+}
+
+.chat-voice-control {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  padding: 0 0.5rem;
 }
 
 .input-container:focus-within {
@@ -171,6 +192,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .chat-input {
   flex: 1;
+  min-width: 0;
   background: transparent;
   border: none;
   padding: 1rem 1.5rem;
@@ -178,6 +200,12 @@ h1, h2, h3, h4, h5, h6 {
   color: white;
   font-family: var(--font-primary);
   outline: none;
+  resize: none;
+  field-sizing: content;
+  min-height: 44px;
+  line-height: 1.45;
+  max-height: 7rem;
+  overflow-y: auto;
 }
 
 .chat-input::placeholder {
@@ -292,6 +320,8 @@ h1, h2, h3, h4, h5, h6 {
   transition: all 0.2s ease;
   font-family: var(--font-primary);
   backdrop-filter: blur(8px);
+  min-height: 42px;
+  overflow-wrap: anywhere;
 }
 
 .action-pill:hover {
@@ -307,6 +337,10 @@ h1, h2, h3, h4, h5, h6 {
   padding-top: 6rem; /* Space for logo */
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overscroll-behavior: contain;
+  scroll-padding-bottom: 1rem;
 }
 
 .chat-input-wrapper {
@@ -314,6 +348,8 @@ h1, h2, h3, h4, h5, h6 {
   padding-bottom: 2rem;
   display: flex;
   justify-content: center;
+  flex: 0 0 auto;
+  padding-bottom: max(2rem, env(safe-area-inset-bottom));
 }
 
 /* Messages */
@@ -338,6 +374,9 @@ h1, h2, h3, h4, h5, h6 {
   font-size: 0.95rem; /* Reduced slightly from 1.05rem */
   line-height: 1.5; /* Slightly tighter line height to match smaller font */
   white-space: pre-line;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .message-ai .message-bubble {
@@ -372,6 +411,9 @@ h1, h2, h3, h4, h5, h6 {
   flex-direction: column;
   position: relative;
   flex-shrink: 0;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .anim-header {
@@ -380,7 +422,37 @@ h1, h2, h3, h4, h5, h6 {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.75rem;
 }
+
+.anim-header-actions,
+.anim-window-dots {
+  display: flex;
+  align-items: center;
+}
+
+.anim-header-actions { gap: 0.65rem; }
+.anim-window-dots { gap: 4px; }
+.anim-window-dots span { width: 8px; height: 8px; border-radius: 50%; }
+.anim-window-dots span:nth-child(1) { background: #ef4444; }
+.anim-window-dots span:nth-child(2) { background: #eab308; }
+.anim-window-dots span:nth-child(3) { background: #22c55e; }
+
+.visual-panel-toggle {
+  display: none;
+  min-height: 44px;
+  align-items: center;
+  gap: 0.3rem;
+  border: 0;
+  background: transparent;
+  color: #bfdbfe;
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.visual-panel-toggle svg { transition: transform 0.2s ease; }
+.visual-panel-expanded .visual-panel-toggle svg { transform: rotate(180deg); }
 
 .anim-title {
   font-family: var(--font-heading);
@@ -705,6 +777,8 @@ h1, h2, h3, h4, h5, h6 {
   font: inherit;
   font-size: 0.68rem;
   cursor: pointer;
+  min-height: 42px;
+  overflow-wrap: anywhere;
 }
 
 .company-suggestion-chips button:hover {
@@ -790,116 +864,159 @@ h1, h2, h3, h4, h5, h6 {
   transform: scale(0.8); /* Desktop visual scale */
 }
 
-/* Mobile Responsiveness */
-.mobile-only { display: none; }
-@media (max-width: 1024px) {
-  .ai-agent-container {
-    height: 320px; /* Unzoomed layout height (zoom handles the scaling) */
-  }
-  
-  .ai-agent-scaler {
-    transform: scale(1.0); /* Unzoomed visual scale */
-  }
+/* Responsive conversational layout */
+.schedule-card-wrapper { margin-top: 1rem; width: min(85%, 620px); }
 
-  .mobile-app-container {
-    height: 520px; /* Unzoomed layout height */
-  }
-  
-  .mobile-app-scaler {
-    transform: scale(1.0); /* Unzoomed visual scale */
-  }
-
-  .hero-title {
-    font-size: 2.5rem;
-  }
-  
-  .hero-subtitle {
-    font-size: 1rem;
-    margin-bottom: 2rem;
-  }
-  
+@media (max-width: 1180px) {
   .active-chat-layout {
     flex-direction: column;
+    padding-top: max(3.75rem, env(safe-area-inset-top));
   }
 
   .chat-section {
+    order: 1;
     max-width: 100%;
-    order: 2; /* Chat below animation */
-  }
-  
-  .chat-scroll-area {
-    padding-top: 2rem;
-  }
-
-  .desktop-only { display: none !important; }
-  .mobile-only { 
-    display: flex !important; 
-    position: relative !important;
-    top: auto;
-    z-index: 50;
     width: 100%;
-    margin: 3.5rem 0 0 0; /* Clear logo, no bottom margin needed if chat scrolls below */
-    background: rgba(15, 23, 42, 0.4) !important;
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255,255,255,0.1) !important;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
-    border-radius: 20px;
-    flex-shrink: 0;
+    flex: 1 1 auto;
   }
 
-  .mobile-only .anim-header {
-    padding: 0.6rem 0.8rem;
+  .responsive-visual-panel {
+    order: 2;
+    width: auto;
+    max-width: none;
+    max-height: min(46dvh, 430px);
+    margin: 0 1rem max(0.75rem, env(safe-area-inset-bottom));
+    border-radius: 18px;
+    flex: 0 0 auto;
+    transition: max-height 0.25s ease;
   }
 
-  .mobile-only .anim-body-container {
-    padding: 0.6rem 0.8rem !important;
-    gap: 0.4rem !important;
-  }
-  
-  .mobile-only .anim-header .anim-title {
-    display: inline !important;
-    font-size: 0.8rem;
-  }
+  .responsive-visual-panel.visual-panel-collapsed { max-height: 54px; }
+  .responsive-visual-panel.visual-panel-collapsed .anim-body-container,
+  .responsive-visual-panel.visual-panel-collapsed .anim-content { display: none; }
 
-  .mobile-only .anim-content {
-    padding: 0;
-    margin-bottom: 0; 
+  .visual-panel-toggle { display: flex; }
+  .responsive-visual-panel .anim-header { min-height: 52px; padding: 0.35rem 0.8rem; }
+  .responsive-visual-panel .anim-body-container { padding: 0.6rem 0.8rem !important; gap: 0.45rem !important; }
+  .responsive-visual-panel .anim-content {
+    padding: 0.75rem;
+    overflow: auto;
     align-items: flex-start;
   }
+  .responsive-visual-panel .anim-scale-wrapper { min-height: 0; }
 
-  .mobile-only .anim-scale-wrapper {
-    width: 100%;
-    zoom: 0.55; /* Automatically scales visual AND layout footprint! */
-  }
-
-  .step-dot {
-    width: 14px !important;
-    height: 14px !important;
-    font-size: 8px !important;
-    border-width: 1px !important;
-  }
-
-  .tags-container {
-    display: flex !important;
-  }
-
-  .device-frame {
-    height: 400px; /* Shorter for mobile landscape */
-  }
-
-  .browser-frame {
-    height: 250px;
-    width: 600px !important; /* Explicit width prevents 100% zoom evaluation bugs */
-  }
-
+  .chat-scroll-area { padding-top: 1rem; }
   .brand-logo {
-    top: 1rem;
-    left: 1rem;
+    top: max(1rem, env(safe-area-inset-top));
+    left: max(1rem, env(safe-area-inset-left));
     font-size: 1.2rem;
   }
 
+  .ai-agent-container { height: 225px; overflow: hidden; }
+  .ai-agent-scaler { transform: scale(0.72); }
+  .mobile-app-container { height: 340px; overflow: hidden; }
+  .mobile-app-scaler { transform: scale(0.64); }
+  .browser-frame { width: 100%; height: 250px; }
+}
+
+@media (max-width: 767px) {
+  .centered-layout {
+    justify-content: center;
+    padding: max(4.25rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+  }
+
+  .hero-title {
+    font-size: clamp(2rem, 10vw, 2.75rem);
+    line-height: 1.05;
+    margin-bottom: 1rem;
+  }
+
+  .input-container { border-radius: 18px; }
+  .chat-input-form { gap: 0.25rem; }
+  .chat-voice-control { padding: 0; }
+  .chat-input { padding: 0.75rem 0.35rem; font-size: 1rem; }
+  .chat-submit-btn { flex: 0 0 44px; margin-right: 0; }
+  .dekode-voice-entry.is-compact { flex: 0 0 44px; width: 44px; height: 44px; }
+
+  .options-container { gap: 0.5rem; margin-top: 1.1rem; }
+  .action-pill { padding: 0.52rem 0.75rem; font-size: 0.82rem; }
+
+  .chat-scroll-area {
+    padding: 0.75rem max(0.75rem, env(safe-area-inset-right)) 0.75rem max(0.75rem, env(safe-area-inset-left));
+  }
+  .message-row { margin-bottom: 0.85rem; }
+  .message-bubble { max-width: 92%; padding: 0.8rem 0.9rem; font-size: 0.9rem; }
+  .company-suggestion-chips { gap: 0.4rem; }
+  .company-suggestion-chips button { padding: 0.45rem 0.6rem; }
+
   .chat-input-wrapper {
-    padding: 1rem;
+    padding: 0.65rem max(0.75rem, env(safe-area-inset-right)) max(0.65rem, env(safe-area-inset-bottom)) max(0.75rem, env(safe-area-inset-left));
+  }
+
+  .responsive-visual-panel {
+    margin: 0 max(0.75rem, env(safe-area-inset-right)) max(0.5rem, env(safe-area-inset-bottom)) max(0.75rem, env(safe-area-inset-left));
+    max-height: min(48dvh, 390px);
+  }
+  .anim-title { font-size: 0.78rem; letter-spacing: 0.06em; }
+  .anim-window-dots { display: none; }
+
+  .knowledge-card-grid { grid-template-columns: 1fr; }
+  .services-panel-grid .knowledge-panel-button { min-height: 60px; }
+  .knowledge-panel-button,
+  .tech-badge,
+  .ai-graph-core,
+  .ai-graph-node { min-height: 44px; }
+  .company-knowledge-panel { min-height: 240px; }
+  .tech-orbit { height: 250px; transform: scale(0.92); }
+  .ai-knowledge-graph { width: min(300px, 100%); transform: scale(0.9); }
+
+  .ai-agent-container { height: 175px; }
+  .ai-agent-scaler { transform: scale(0.55); }
+  .mobile-app-container { height: 280px; }
+  .mobile-app-scaler { transform: scale(0.52); }
+  .browser-frame { height: 220px; min-width: 0; }
+  .schedule-card-wrapper { width: 100%; }
+  .schedule-card-wrapper .action-pill { flex: 1 1 135px; }
+}
+
+@media (max-width: 380px) {
+  .centered-layout { padding-inline: 0.75rem; }
+  .hero-title { font-size: 1.95rem; }
+  .options-container .action-pill { flex: 1 1 calc(50% - 0.5rem); }
+  .message-bubble { max-width: 96%; }
+  .visual-panel-toggle span { display: none; }
+  .responsive-visual-panel { margin-inline: 0.5rem; }
+}
+
+@media (max-height: 640px) and (orientation: landscape), (max-width: 1180px) and (max-height: 640px) {
+  .active-chat-layout { padding-top: max(3rem, env(safe-area-inset-top)); }
+  .brand-logo { top: 0.65rem; }
+  .responsive-visual-panel { max-height: 38dvh; }
+  .chat-input-wrapper { padding-block: 0.45rem max(0.45rem, env(safe-area-inset-bottom)); }
+  .message-row { margin-bottom: 0.6rem; }
+}
+
+@media (min-width: 1440px) {
+  .chat-section { max-width: 880px; }
+  .floating-animation-panel { width: 430px; margin-right: clamp(2rem, 5vw, 6rem); }
+}
+
+@media (hover: none) {
+  .action-pill:hover,
+  .knowledge-panel-button:hover,
+  .company-suggestion-chips button:hover { transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vibrant-background,
+  .pulse-anim,
+  .waveform-bar,
+  .typewriter-cursor { animation: none !important; }
+
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
 }

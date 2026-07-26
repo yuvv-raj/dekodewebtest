@@ -44,6 +44,8 @@ export default function DekodeVoiceSession({ onClose, onSwitchToText, onTurn, on
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [leadForm, setLeadForm] = useState(null);
   const [submissionResult, setSubmissionResult] = useState(null);
+  const sessionRef = useRef(null);
+  const onCloseRef = useRef(onClose);
   const stateRef = useRef(state);
   const leadRef = useRef(leadProfile);
   const stt = useMemo(() => new BrowserSpeechToTextProvider(), []);
@@ -53,9 +55,40 @@ export default function DekodeVoiceSession({ onClose, onSwitchToText, onTurn, on
   const notification = useMemo(() => new LeadNotificationService({ mode: voiceConfig.notificationMode, endpoint: voiceConfig.leadEndpoint }), []);
 
   useEffect(() => { stateRef.current = state; }, [state]);
+  useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
   useEffect(() => { leadRef.current = leadProfile; }, [leadProfile]);
   useEffect(() => () => { stt.stop(); tts.stop(); }, [stt, tts]);
   useEffect(() => { trackVoiceEvent('dekode_voice_opened', { provider: voiceConfig.provider }); }, []);
+  useEffect(() => {
+    const previousFocus = document.activeElement;
+    const dialog = sessionRef.current;
+    dialog?.querySelector('button, input, textarea')?.focus();
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onCloseRef.current();
+        return;
+      }
+      if (event.key !== 'Tab' || !dialog) return;
+      const focusable = [...dialog.querySelectorAll('button:not(:disabled), input:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])')]
+        .filter((element) => element.offsetParent !== null);
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      previousFocus?.focus?.();
+    };
+  }, []);
 
   const beginListening = useCallback(() => {
     tts.stop();
@@ -207,6 +240,7 @@ export default function DekodeVoiceSession({ onClose, onSwitchToText, onTurn, on
   return (
     <motion.div className="voice-layer" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
       <motion.section
+        ref={sessionRef}
         className="voice-session"
         role="dialog"
         aria-modal="true"

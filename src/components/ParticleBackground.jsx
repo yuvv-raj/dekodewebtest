@@ -7,13 +7,19 @@ export default function ParticleBackground() {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     
     let animationFrameId;
+    let resizeFrameId;
     let particles = [];
     
     const resizeCanvas = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      cancelAnimationFrame(resizeFrameId);
+      resizeFrameId = requestAnimationFrame(() => {
+        canvas.width = document.documentElement.clientWidth;
+        canvas.height = document.documentElement.clientHeight;
+        initParticles();
+      });
     };
     
     window.addEventListener('resize', resizeCanvas);
@@ -46,7 +52,7 @@ export default function ParticleBackground() {
 
     const initParticles = () => {
       particles = [];
-      const numParticles = Math.floor((canvas.width * canvas.height) / 15000); // Responsive density
+      const numParticles = Math.min(110, Math.floor((canvas.width * canvas.height) / 15000)); // Responsive density
       for (let i = 0; i < numParticles; i++) {
         particles.push(new Particle());
       }
@@ -83,14 +89,24 @@ export default function ParticleBackground() {
       
       drawLines();
       
-      animationFrameId = requestAnimationFrame(render);
+      if (!reducedMotion.matches && !document.hidden) {
+        animationFrameId = requestAnimationFrame(render);
+      }
     };
 
     render();
 
+    const handleVisibility = () => {
+      cancelAnimationFrame(animationFrameId);
+      if (!document.hidden) render();
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
     return () => {
       window.removeEventListener('resize', resizeCanvas);
+      document.removeEventListener('visibilitychange', handleVisibility);
       cancelAnimationFrame(animationFrameId);
+      cancelAnimationFrame(resizeFrameId);
     };
   }, []);
 
@@ -101,8 +117,8 @@ export default function ParticleBackground() {
         position: 'fixed',
         top: 0,
         left: 0,
-        width: '100vw',
-        height: '100vh',
+        width: '100%',
+        height: '100%',
         pointerEvents: 'none', // Don't block clicks
         zIndex: -1, // Just above the gradient background, but behind everything else
       }}
