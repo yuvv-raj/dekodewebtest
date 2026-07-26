@@ -5,6 +5,9 @@ import AnimationPanel from './AnimationPanel';
 import CompanyKnowledgePanel from './CompanyKnowledgePanel';
 import ParticleBackground from './ParticleBackground';
 import TypewriterText from './TypewriterText';
+import DekodeVoiceEntry from './voice/DekodeVoiceEntry';
+import DekodeVoiceSession from './voice/DekodeVoiceSession';
+import { voiceConfig } from '../voice/config';
 import { extractDomain, detectTone, extractTag, getTypingDelay, generateAudienceResponse, generateTimelineResponse, isTooVague, detectPlatform, generateCustomPlatformQuestion, generateCustomComplexityQuestion } from '../utils/chatIntelligence';
 import {
   classifyCompanyIntent,
@@ -35,6 +38,7 @@ export default function ChatApp() {
   const [gatheredTags, setGatheredTags] = useState([]);
   const [chatContext, setChatContext] = useState({ projectType: null, domain: null, tone: 'neutral' });
   const [companyPanel, setCompanyPanel] = useState(null);
+  const [isVoiceOpen, setIsVoiceOpen] = useState(false);
   
   const scrollRef = useRef(null);
   const companyContextRef = useRef(createCompanyConversationContext());
@@ -243,6 +247,23 @@ export default function ChatApp() {
     recognition.start();
   };
 
+  const handleVoiceTurn = ({ userText, assistantText, response }) => {
+    const turnId = Date.now();
+    setMessages((prev) => [
+      ...prev,
+      { id: turnId, sender: 'user', text: userText, source: 'voice' },
+      { id: turnId + 1, sender: 'ai', text: assistantText, source: 'voice' },
+    ]);
+    if (step === 'centered') setStep('company');
+    setCompanyPanel(response);
+    companyContextRef.current = rememberCompanyTurn(companyContextRef.current, response.topic || 'company');
+  };
+
+  const handleVoiceSwitchToText = (draft = '') => {
+    setIsVoiceOpen(false);
+    setInputValue(draft);
+  };
+
   const getAnimationLevel = () => {
     if (step === 'centered') return 0;
     if (step === 'gathering_audience') return 1;
@@ -354,9 +375,13 @@ export default function ChatApp() {
             <div className="input-container">
               <form className="chat-input-form" onSubmit={handleSendMessage}>
                 <div style={{ display: 'flex', alignItems: 'center', background: 'transparent', padding: '0 0.5rem' }}>
-                  <button type="button" onClick={handleSpeech} className="chat-submit-btn" style={{ background: 'transparent', border: 'none', color: isListening ? '#ef4444' : 'rgba(255,255,255,0.7)', marginRight: 0, transition: 'color 0.2s' }}>
-                    <Mic size={18} className={isListening ? 'pulse-anim' : ''} />
-                  </button>
+                  {voiceConfig.enabled ? (
+                    <DekodeVoiceEntry compact onClick={() => setIsVoiceOpen(true)} />
+                  ) : (
+                    <button type="button" onClick={handleSpeech} className="chat-submit-btn" aria-label="Use speech input" style={{ background: 'transparent', border: 'none', color: isListening ? '#ef4444' : 'rgba(255,255,255,0.7)', marginRight: 0, transition: 'color 0.2s' }}>
+                      <Mic size={18} className={isListening ? 'pulse-anim' : ''} />
+                    </button>
+                  )}
                 </div>
                 {isListening ? (
                   <div className="voice-waveform">
@@ -389,6 +414,7 @@ export default function ChatApp() {
                 </button>
               ))}
             </div>
+            {voiceConfig.enabled && <DekodeVoiceEntry onClick={() => setIsVoiceOpen(true)} />}
           </motion.div>
         ) : (
           <motion.div 
@@ -488,9 +514,13 @@ export default function ChatApp() {
                 <div className="input-container active-mode">
                   <form className="chat-input-form" onSubmit={handleSendMessage}>
                     <div style={{ display: 'flex', alignItems: 'center', background: 'transparent', padding: '0 0.5rem' }}>
-                      <button type="button" onClick={handleSpeech} className="chat-submit-btn" style={{ background: 'transparent', border: 'none', color: isListening ? '#ef4444' : 'rgba(255,255,255,0.7)', marginRight: 0, transition: 'color 0.2s' }}>
-                        <Mic size={18} className={isListening ? 'pulse-anim' : ''} />
-                      </button>
+                      {voiceConfig.enabled ? (
+                        <DekodeVoiceEntry compact onClick={() => setIsVoiceOpen(true)} />
+                      ) : (
+                        <button type="button" onClick={handleSpeech} className="chat-submit-btn" aria-label="Use speech input" style={{ background: 'transparent', border: 'none', color: isListening ? '#ef4444' : 'rgba(255,255,255,0.7)', marginRight: 0, transition: 'color 0.2s' }}>
+                          <Mic size={18} className={isListening ? 'pulse-anim' : ''} />
+                        </button>
+                      )}
                     </div>
                     {isListening ? (
                       <div className="voice-waveform">
@@ -522,6 +552,16 @@ export default function ChatApp() {
             {renderAnimationCard('desktop-only')}
 
           </motion.div>
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {voiceConfig.enabled && isVoiceOpen && (
+          <DekodeVoiceSession
+            onClose={() => setIsVoiceOpen(false)}
+            onSwitchToText={handleVoiceSwitchToText}
+            onTurn={handleVoiceTurn}
+            onPanelChange={setCompanyPanel}
+          />
         )}
       </AnimatePresence>
     </>

@@ -182,6 +182,40 @@ function AiPanel({ onSelect }) {
   );
 }
 
+function RecommendationsPanel({ onSelect }) {
+  return (
+    <motion.div variants={stagger} initial="hidden" animate="show" className="knowledge-card-grid services-panel-grid">
+      {knowledge.services.slice(0, 6).map((service, index) => {
+        const Icon = serviceIcons[index % serviceIcons.length];
+        return (
+          <PanelButton key={service.id} prompt={`Tell me more about ${service.name}`} onSelect={onSelect}>
+            <Icon size={18} />
+            <span>
+              <strong>{service.name}</strong>
+              <small>{service.summary}</small>
+            </span>
+          </PanelButton>
+        );
+      })}
+    </motion.div>
+  );
+}
+
+function MeetingPanel({ onSelect }) {
+  return (
+    <motion.div variants={stagger} initial="hidden" animate="show" className="why-panel">
+      <PanelButton prompt="I would like to request a meeting" onSelect={onSelect}>
+        <CheckCircle2 size={18} />
+        <span><strong>Preferred meeting time</strong><small>Choose a temporary preference in DEKODE Voice. The team confirms availability after submission.</small></span>
+      </PanelButton>
+      <PanelButton prompt="Help me prepare an enquiry instead" onSelect={onSelect}>
+        <Workflow size={18} />
+        <span><strong>Prepare an enquiry</strong><small>Review and edit all conversation-inferred details before submitting.</small></span>
+      </PanelButton>
+    </motion.div>
+  );
+}
+
 const panels = {
   overview: OverviewPanel,
   services: ServicesPanel,
@@ -190,6 +224,8 @@ const panels = {
   process: ProcessPanel,
   why: WhyPanel,
   ai: AiPanel,
+  recommendations: RecommendationsPanel,
+  meeting: MeetingPanel,
 };
 
 export default function CompanyKnowledgePanel({ panel = 'overview', onSelect }) {
