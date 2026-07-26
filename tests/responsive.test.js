@@ -35,3 +35,13 @@ test('uses multiline keyboard-aware composers and an accessible visual-panel con
   assert.match(chatApp, /aria-label=\{isVisualPanelExpanded/);
   assert.match(chatApp, /max-height:\s*640px/);
 });
+
+test('keeps the composer responsive with rotating hints and separate voice typing', () => {
+  assert.match(chatApp, /placeholderMessages\[placeholderIndex\]/);
+  assert.match(chatApp, /Start voice typing/);
+  assert.match(chatApp, /Stop voice typing/);
+  assert.match(chatApp, /BrowserSpeechToTextProvider/);
+  assert.doesNotMatch(chatApp, /<DekodeVoiceEntry/);
+  assert.match(indexCss, /\.hero-title\s*\{[^}]*font-size:\s*clamp\(2\.25rem,\s*4\.25vw,\s*3\.5rem\)/s);
+  assert.match(indexCss, /\.chat-mic-btn\s*\{[^}]*width:\s*44px[^}]*height:\s*44px/s);
+});

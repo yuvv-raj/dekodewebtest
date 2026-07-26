@@ -5,9 +5,10 @@ import AnimationPanel from './AnimationPanel';
 import CompanyKnowledgePanel from './CompanyKnowledgePanel';
 import ParticleBackground from './ParticleBackground';
 import TypewriterText from './TypewriterText';
-import DekodeVoiceEntry from './voice/DekodeVoiceEntry';
 import DekodeVoiceSession from './voice/DekodeVoiceSession';
 import { voiceConfig } from '../voice/config';
+import { BrowserSpeechToTextProvider } from '../voice/providers/browserSpeechToTextProvider';
+import { placeholderInterval, placeholderMessages } from './chatComposerConfig';
 import { extractDomain, detectTone, extractTag, getTypingDelay, generateAudienceResponse, generateTimelineResponse, isTooVague, detectPlatform, generateCustomPlatformQuestion, generateCustomComplexityQuestion } from '../utils/chatIntelligence';
 import {
   classifyCompanyIntent,
@@ -31,6 +32,9 @@ export default function ChatApp() {
   const [isTyping, setIsTyping] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [isInputFocused, setIsInputFocused] = useState(false);
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
+  const [voiceStatus, setVoiceStatus] = useState('');
   
   // States: 'centered' (hero), 'active' (chatting)
   const [step, setStep] = useState('centered'); 
@@ -44,6 +48,28 @@ export default function ChatApp() {
   
   const scrollRef = useRef(null);
   const companyContextRef = useRef(createCompanyConversationContext());
+  const speechProviderRef = useRef(null);
+  const committedTranscriptRef = useRef('');
+  const voiceStatusTimerRef = useRef(null);
+
+  useEffect(() => {
+    speechProviderRef.current = new BrowserSpeechToTextProvider();
+    return () => {
+      speechProviderRef.current?.stop();
+      if (voiceStatusTimerRef.current) clearTimeout(voiceStatusTimerRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (isInputFocused || inputValue || reduceMotion.matches) return undefined;
+
+    const intervalId = window.setInterval(() => {
+      setPlaceholderIndex((current) => (current + 1) % placeholderMessages.length);
+    }, placeholderInterval);
+
+    return () => window.clearInterval(intervalId);
+  }, [isInputFocused, inputValue]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -142,6 +168,11 @@ export default function ChatApp() {
     e.preventDefault();
     if (!inputValue.trim()) return;
     if (step === 'scheduling' || step === 'done' || isTyping) return;
+    if (isListening) {
+      speechProviderRef.current?.stop();
+      setIsListening(false);
+      setVoiceStatus('');
+    }
 
     // Trigger send pulse animation
     setIsSending(true);
@@ -239,32 +270,120 @@ export default function ChatApp() {
     simulateAiTyping("Perfect! Your request has been securely sent to our team. We've booked that slot on our calendar and sent a confirmation email to you. We look forward to speaking with you!");
   };
 
-  const handleSpeech = () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      alert("Speech recognition is not supported in this browser.");
+  const showVoiceStatus = (message, persist = false) => {
+    if (voiceStatusTimerRef.current) clearTimeout(voiceStatusTimerRef.current);
+    setVoiceStatus(message);
+    if (!persist) {
+      voiceStatusTimerRef.current = window.setTimeout(() => setVoiceStatus(''), 5000);
+    }
+  };
+
+  const formatRecognitionError = (error) => {
+    const code = String(error?.message || error || '').toLowerCase();
+    if (code.includes('not-allowed') || code.includes('permission') || code.includes('denied')) {
+      return 'Microphone permission was denied. You can keep typing instead.';
+    }
+    if (code.includes('audio-capture') || code.includes('unavailable') || code.includes('notfound')) {
+      return 'No microphone is available. You can keep typing instead.';
+    }
+    if (code.includes('no-speech')) {
+      return 'No speech was detected. Try again or keep typing.';
+    }
+    if (code.includes('aborted')) {
+      return 'Voice typing was cancelled.';
+    }
+    if (code.includes('network')) {
+      return 'Voice recognition timed out. Try again or keep typing.';
+    }
+    return 'Voice typing stopped unexpectedly. You can keep typing instead.';
+  };
+
+  const handleSpeech = async () => {
+    const provider = speechProviderRef.current;
+    if (!provider?.isSupported()) {
+      showVoiceStatus('Voice typing is not supported in this browser.');
       return;
     }
 
-    const recognition = new SpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = false;
-
-    recognition.onstart = () => {
-      setIsListening(true);
-    };
-
-    recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript;
-      setInputValue(prev => prev ? prev + ' ' + transcript : transcript);
-    };
-
-    recognition.onend = () => {
+    if (isListening) {
+      provider.stop();
       setIsListening(false);
-    };
+      showVoiceStatus('Voice typing stopped.');
+      return;
+    }
 
-    recognition.start();
+    showVoiceStatus('Requesting microphone access…', true);
+    try {
+      await provider.requestPermission();
+      committedTranscriptRef.current = inputValue.trim();
+      provider.start({
+        onInterim: (transcript) => {
+          const prefix = committedTranscriptRef.current;
+          setInputValue(prefix ? `${prefix} ${transcript}` : transcript);
+        },
+        onFinal: (transcript) => {
+          const prefix = committedTranscriptRef.current;
+          const nextValue = prefix ? `${prefix} ${transcript}` : transcript;
+          committedTranscriptRef.current = nextValue;
+          setInputValue(nextValue);
+        },
+        onError: (error) => {
+          setIsListening(false);
+          showVoiceStatus(formatRecognitionError(error));
+        },
+        onEnd: () => {
+          setIsListening(false);
+          setVoiceStatus((current) => current === 'Listening…' ? '' : current);
+        },
+      });
+      setIsListening(true);
+      showVoiceStatus('Listening…', true);
+    } catch (error) {
+      setIsListening(false);
+      showVoiceStatus(formatRecognitionError(error));
+    }
   };
+
+  const handleInputChange = (event) => {
+    setInputValue(event.target.value);
+    if (isListening) committedTranscriptRef.current = event.target.value.trim();
+  };
+
+  const renderComposerInput = ({ readOnly = false, autoFocus = false } = {}) => (
+    <div className="chat-input-field">
+      {!inputValue && !readOnly && (
+        <span key={placeholderMessages[placeholderIndex]} className="rotating-placeholder" aria-hidden="true">
+          {placeholderMessages[placeholderIndex]}
+        </span>
+      )}
+      <textarea
+        rows="1"
+        className="chat-input"
+        value={inputValue}
+        onChange={handleInputChange}
+        onKeyDown={handleComposerKeyDown}
+        onFocus={() => setIsInputFocused(true)}
+        onBlur={() => setIsInputFocused(false)}
+        readOnly={readOnly}
+        autoFocus={autoFocus}
+        aria-label="Message"
+      />
+    </div>
+  );
+
+  const renderVoiceTypingButton = (disabled = false) => (
+    <button
+      type="button"
+      onClick={handleSpeech}
+      className={`chat-mic-btn ${isListening ? 'is-listening' : ''}`}
+      aria-label={isListening ? 'Stop voice typing' : 'Start voice typing'}
+      aria-pressed={isListening}
+      disabled={disabled}
+      title={isListening ? 'Stop voice typing' : 'Start voice typing'}
+    >
+      <Mic size={19} />
+    </button>
+  );
 
   const handleComposerKeyDown = (event) => {
     if (event.key === 'Enter' && !event.shiftKey) {
@@ -416,38 +535,20 @@ export default function ChatApp() {
             
             <div className="input-container">
               <form className="chat-input-form" onSubmit={handleSendMessage}>
-                <div className="chat-voice-control">
-                  {voiceConfig.enabled ? (
-                    <DekodeVoiceEntry compact onClick={() => setIsVoiceOpen(true)} />
-                  ) : (
-                    <button type="button" onClick={handleSpeech} className="chat-submit-btn" aria-label="Use speech input" style={{ background: 'transparent', border: 'none', color: isListening ? '#ef4444' : 'rgba(255,255,255,0.7)', marginRight: 0, transition: 'color 0.2s' }}>
-                      <Mic size={18} className={isListening ? 'pulse-anim' : ''} />
-                    </button>
-                  )}
-                </div>
-                {isListening ? (
-                  <div className="voice-waveform">
-                    <div className="waveform-bar"></div><div className="waveform-bar"></div><div className="waveform-bar"></div><div className="waveform-bar"></div><div className="waveform-bar"></div>
-                  </div>
-                ) : (
-                  <textarea
-                    rows="1"
-                    className="chat-input"
-                    placeholder="Ask Dekode to build..."
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    onKeyDown={handleComposerKeyDown}
-                    autoFocus
-                  />
-                )}
+                {renderComposerInput()}
+                {renderVoiceTypingButton()}
                 <button
                   type="submit"
                   className={`chat-submit-btn ${isSending ? 'shake-anim' : ''}`}
-                  disabled={(!inputValue.trim() && !isListening)}
+                  disabled={!inputValue.trim()}
+                  aria-label="Send message"
                 >
                   <Send size={18} />
                 </button>
               </form>
+              <div className={`composer-status ${voiceStatus ? 'is-visible' : ''}`} role="status" aria-live="polite">
+                {voiceStatus}
+              </div>
             </div>
 
             <div className="options-container">
@@ -457,7 +558,6 @@ export default function ChatApp() {
                 </button>
               ))}
             </div>
-            {voiceConfig.enabled && <DekodeVoiceEntry onClick={() => setIsVoiceOpen(true)} />}
           </motion.div>
         ) : (
           <motion.div 
@@ -553,38 +653,20 @@ export default function ChatApp() {
               <div className="chat-input-wrapper">
                 <div className="input-container active-mode">
                   <form className="chat-input-form" onSubmit={handleSendMessage}>
-                    <div className="chat-voice-control">
-                      {voiceConfig.enabled ? (
-                        <DekodeVoiceEntry compact onClick={() => setIsVoiceOpen(true)} />
-                      ) : (
-                        <button type="button" onClick={handleSpeech} className="chat-submit-btn" aria-label="Use speech input" style={{ background: 'transparent', border: 'none', color: isListening ? '#ef4444' : 'rgba(255,255,255,0.7)', marginRight: 0, transition: 'color 0.2s' }}>
-                          <Mic size={18} className={isListening ? 'pulse-anim' : ''} />
-                        </button>
-                      )}
-                    </div>
-                    {isListening ? (
-                      <div className="voice-waveform">
-                        <div className="waveform-bar"></div><div className="waveform-bar"></div><div className="waveform-bar"></div><div className="waveform-bar"></div><div className="waveform-bar"></div>
-                      </div>
-                    ) : (
-                      <textarea
-                        rows="1"
-                        className="chat-input"
-                        placeholder={step === 'done' ? "Chat finished" : "Type your message..."}
-                        value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
-                        onKeyDown={handleComposerKeyDown}
-                        readOnly={step === 'scheduling' || step === 'done'}
-                      />
-                    )}
+                    {renderComposerInput({ readOnly: step === 'scheduling' || step === 'done' })}
+                    {renderVoiceTypingButton(step === 'scheduling' || step === 'done')}
                     <button
                       type="submit"
                       className={`chat-submit-btn ${isSending ? 'shake-anim' : ''}`}
-                      disabled={(!inputValue.trim() && !isListening) || step === 'scheduling' || step === 'done' || isTyping}
+                      disabled={!inputValue.trim() || step === 'scheduling' || step === 'done' || isTyping}
+                      aria-label="Send message"
                     >
                       <Send size={18} />
                     </button>
                   </form>
+                  <div className={`composer-status ${voiceStatus ? 'is-visible' : ''}`} role="status" aria-live="polite">
+                    {voiceStatus}
+                  </div>
                 </div>
               </div>
             </div>
