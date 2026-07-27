@@ -36,6 +36,11 @@ import {
   leaveCompanyConversation,
   rememberCompanyTurn,
 } from "../knowledge";
+import {
+  publishSessionSummary,
+  subscribeToContentChat,
+  subscribeToVoiceOpen,
+} from "../content/ContentToChatBridge";
 
 const PROJECT_OPTIONS = [
   "Mobile App",
@@ -73,6 +78,7 @@ export default function ChatApp() {
   );
 
   const scrollRef = useRef(null);
+  const composerRef = useRef(null);
   const companyContextRef = useRef(createCompanyConversationContext());
   const speechProviderRef = useRef(null);
   const committedTranscriptRef = useRef("");
@@ -88,12 +94,46 @@ export default function ChatApp() {
   }, []);
 
   useEffect(() => {
+    const focusChatWithDraft = (event) => {
+      const prompt = event.detail?.suggestedPrompt;
+      if (!prompt) return;
+      setInputValue(prompt);
+      document.querySelector(".app-container")?.scrollTo({
+        top: 0,
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth",
+      });
+      window.requestAnimationFrame(() => composerRef.current?.focus());
+    };
+    const openVoice = () => {
+      document.querySelector(".app-container")?.scrollTo({ top: 0, behavior: "auto" });
+      setIsVoiceOpen(true);
+    };
+    const unsubscribeChat = subscribeToContentChat(focusChatWithDraft);
+    const unsubscribeVoice = subscribeToVoiceOpen(openVoice);
+    return () => {
+      unsubscribeChat();
+      unsubscribeVoice();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!projectType) {
+      publishSessionSummary("");
+      return;
+    }
+    const details = gatheredTags.slice(1, 3);
+    publishSessionSummary(
+      details.length
+        ? `You are exploring a ${projectType.toLowerCase()} with ${details.join(" and ")}.`
+        : `You are exploring a ${projectType.toLowerCase()} with DEKODE.`,
+    );
+  }, [projectType, gatheredTags]);
+
+  useEffect(() => {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const voiceTypingActive = [
-      "requesting",
-      "listening",
-      "processing",
-    ].includes(voiceTypingState);
+    const voiceTypingActive = ['requesting', 'listening', 'processing'].includes(voiceTypingState);
     if (
       isInputFocused ||
       inputValue ||
@@ -492,6 +532,7 @@ export default function ChatApp() {
         </span>
       )}
       <textarea
+        ref={composerRef}
         rows="1"
         className="chat-input"
         value={inputValue}
@@ -597,11 +638,9 @@ export default function ChatApp() {
             onClick={() => setIsVisualPanelExpanded((expanded) => !expanded)}
             aria-expanded={isVisualPanelExpanded}
             aria-controls="supporting-visual-content"
-            aria-label={
-              isVisualPanelExpanded
-                ? "Collapse supporting visual"
-                : "Expand supporting visual"
-            }
+          aria-label={isVisualPanelExpanded
+            ? "Collapse supporting visual"
+            : "Expand supporting visual"}
           >
             <span>{isVisualPanelExpanded ? "Collapse" : "Expand"}</span>
             <ChevronDown size={18} />
@@ -997,7 +1036,7 @@ export default function ChatApp() {
               </div>
             </div>
 
-            {renderAnimationCard("responsive-visual-panel")}
+            {renderAnimationCard('responsive-visual-panel')}
           </motion.div>
         )}
       </AnimatePresence>
