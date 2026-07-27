@@ -1021,10 +1021,16 @@ h1, h2, h3, h4, h5, h6 {
   }
 
   .hero-title {
-    font-size: clamp(2rem, 8.5vw, 2.6rem);
+    width: 100%;
+    max-width: 100%;
+    font-size: clamp(1.45rem, 6.4vw, 2.6rem);
     line-height: 1.05;
     margin-bottom: 1rem;
+    white-space: nowrap;
   }
+
+  .active-chat-layout .responsive-visual-panel { order: 1; }
+  .active-chat-layout .chat-section { order: 2; }
 
   .input-container { border-radius: 18px; }
   .chat-input-form { gap: 0.25rem; }
@@ -1077,7 +1083,6 @@ h1, h2, h3, h4, h5, h6 {
 
 @media (max-width: 380px) {
   .centered-layout { padding-inline: 0.75rem; }
-  .hero-title { font-size: clamp(1.85rem, 9vw, 2.1rem); }
   .options-container .action-pill { flex: 1 1 calc(50% - 0.5rem); }
   .message-bubble { max-width: 96%; }
   .visual-panel-toggle span { display: none; }
