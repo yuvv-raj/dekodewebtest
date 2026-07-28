@@ -35,6 +35,27 @@ VITE_LEAD_NOTIFICATION_ENDPOINT=/api/leads
 
 All `VITE_*` values are public client configuration. Never place a voice, email, CRM, or calendar secret in them.
 
+## Protected client proposals
+
+The client-proposal feature is isolated behind `VITE_CLIENT_PROPOSALS_ENABLED`.
+Approved proposal source is stored under `api/_proposal/source`, verified by
+SHA-256, and converted into server-only response payloads during the build.
+The public Vite bundle contains the generic renderer and access interface only.
+
+Production requires a long, random `PROPOSAL_SESSION_SECRET` server variable.
+Proposal access creates a signed, expiring, HTTP-only cookie scoped to one
+proposal. Protected content, assets, and proposal chat reject requests without
+that session and return private/no-store/noindex headers.
+
+To intentionally update an approved proposal:
+
+1. Replace the server-only source snapshot from the approved source repository.
+2. Review the exact source diff.
+3. Update the pinned source, diagram, and generated-content hashes in the build
+   script and integrity test.
+4. Increment the proposal version and record the approval metadata.
+5. Run the full test and production-build suite.
+
 To disable DEKODE Voice and retain the legacy microphone path:
 
 ```env

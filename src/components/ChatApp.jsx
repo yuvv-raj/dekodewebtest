@@ -7,6 +7,8 @@ import {
   Bot,
   Mic,
   ChevronDown,
+  LockKeyhole,
+  X,
 } from "lucide-react";
 import AnimationPanel from "./AnimationPanel";
 import CompanyKnowledgePanel from "./CompanyKnowledgePanel";
@@ -50,7 +52,15 @@ const PROJECT_OPTIONS = [
   "E-commerce Platform",
 ];
 
-export default function ChatApp() {
+export default function ChatApp({
+  proposalContext = null,
+  proposalChatEnabled = true,
+  onOpenProposalAccess,
+  onExitProposal,
+  onProposalSection,
+  onProposalClarification,
+  onCloseProposalChat,
+}) {
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -83,6 +93,26 @@ export default function ChatApp() {
   const speechProviderRef = useRef(null);
   const committedTranscriptRef = useRef("");
   const voiceStatusTimerRef = useRef(null);
+
+  useEffect(() => {
+    if (proposalContext) {
+      setMessages([
+        {
+          id: Date.now(),
+          sender: "ai",
+          text: "Your proposal is open. Ask me about its process, workflow, constraints, or prototype.",
+        },
+      ]);
+      setStep("proposal");
+      setCompanyPanel(null);
+      companyContextRef.current = createCompanyConversationContext();
+    } else if (step === "proposal") {
+      setMessages([]);
+      setStep("centered");
+    }
+  // The transition is intentionally keyed only to proposal identity.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [proposalContext?.id]);
 
   useEffect(() => {
     speechProviderRef.current = new BrowserSpeechToTextProvider();
@@ -275,6 +305,48 @@ export default function ChatApp() {
     });
   };
 
+  const handleProposalPrompt = async (userMessage) => {
+    if (!userMessage.trim() || isTyping || !proposalChatEnabled) return;
+    setMessages((prev) => [
+      ...prev,
+      { id: Date.now(), sender: "user", text: userMessage },
+    ]);
+    setIsTyping(true);
+    try {
+      const response = await fetch("/api/proposals/query", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ question: userMessage }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          sender: "ai",
+          text: result.answer,
+          proposalSource: result.source,
+          clarificationQuestion: result.canRequestClarification
+            ? userMessage
+            : null,
+        },
+      ]);
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          sender: "ai",
+          text: "I could not access the approved proposal content. Please sign in again or contact the DEKODE team.",
+        },
+      ]);
+    } finally {
+      setIsTyping(false);
+    }
+  };
+
   const handleSendMessage = (e) => {
     e.preventDefault();
     if (!inputValue.trim()) return;
@@ -292,6 +364,11 @@ export default function ChatApp() {
 
     const userMessage = inputValue;
     setInputValue("");
+
+    if (proposalContext) {
+      handleProposalPrompt(userMessage);
+      return;
+    }
 
     const companyIntent = classifyCompanyIntent(
       userMessage,
@@ -776,6 +853,15 @@ export default function ChatApp() {
       <div className="vibrant-background" />
       <ParticleBackground />
       <div className="brand-logo">DEKODE</div>
+      {proposalContext && (
+        <div className="proposal-context-bar" role="status">
+          <span><i /> Answering from your proposal</span>
+          <span>
+            <button type="button" onClick={onExitProposal}>Exit proposal</button>
+            <button type="button" onClick={onCloseProposalChat} aria-label="Close proposal chat"><X size={16} /></button>
+          </span>
+        </div>
+      )}
 
       <AnimatePresence mode="wait">
         {step === "centered" ? (
@@ -787,7 +873,9 @@ export default function ChatApp() {
             transition={{ duration: 0.5, ease: "easeInOut" }}
             className="centered-layout"
           >
-            <h1 className="hero-title">Let's DEKODE together</h1>
+            <h1 className="hero-title">
+              {proposalContext ? "Ask about your proposal" : "Let's DEKODE together"}
+            </h1>
 
             <div className="input-container">
               <form className="chat-input-form" onSubmit={handleSendMessage}>
@@ -812,17 +900,26 @@ export default function ChatApp() {
               </div>
             </div>
 
-            <div className="options-container">
-              {PROJECT_OPTIONS.map((opt) => (
-                <button
-                  key={opt}
-                  className="action-pill"
-                  onClick={() => handleOptionSelect(opt)}
-                >
-                  {opt}
-                </button>
-              ))}
-            </div>
+            {!proposalContext && (
+              <>
+                <div className="options-container">
+                  {PROJECT_OPTIONS.map((opt) => (
+                    <button
+                      key={opt}
+                      className="action-pill"
+                      onClick={() => handleOptionSelect(opt)}
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+                {onOpenProposalAccess && (
+                  <button type="button" className="proposal-entry-button" onClick={onOpenProposalAccess}>
+                    <LockKeyhole size={15} /> Access client proposal
+                  </button>
+                )}
+              </>
+            )}
           </motion.div>
         ) : (
           <motion.div
@@ -877,6 +974,24 @@ export default function ChatApp() {
                               </button>
                             ))}
                           </motion.div>
+                        )}
+                        {msg.sender === "ai" && msg.proposalSource && (
+                          <button
+                            type="button"
+                            className="proposal-entry-button"
+                            onClick={() => onProposalSection?.(msg.proposalSource.sectionId)}
+                          >
+                            View: {msg.proposalSource.label}
+                          </button>
+                        )}
+                        {msg.sender === "ai" && msg.clarificationQuestion && (
+                          <button
+                            type="button"
+                            className="proposal-entry-button"
+                            onClick={() => onProposalClarification?.(msg.clarificationQuestion)}
+                          >
+                            Contact the team
+                          </button>
                         )}
                       </div>
                     </motion.div>
