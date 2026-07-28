@@ -28,7 +28,7 @@ const clean = (value, limit = 4000) =>
 
 const proposal = ${JSON.stringify(proposal)};
 const proposalAssetBase64 = '${proposalAssetBase64}';
-const ACCESS_CODE_HASH = '04d27920b587cbc8194ec2fca8cbcbbfd5d3a58d1412cceeb65643924849c9d3';
+const ACCESS_CODE_HASH = '333ba8c3272dab8b1b19ed6320a7a1f18d97bf7df90f83b320766875aa21b7f7';
 const PASSWORD_HASH = 'f423ec88d9d0369cc0fb449151a994f5bbf44945dba0fde9d42ba8a166d8f475';
 const PASSWORD_SALT = new TextEncoder().encode('dekode-cfs-access-v1');
 const SESSION_TTL = 7200;

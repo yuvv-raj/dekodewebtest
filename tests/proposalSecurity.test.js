@@ -30,7 +30,10 @@ const request = (method, body = {}, cookie = '') => ({
 
 test('invalid access is generic and never sets a session', async () => {
   const response = responseHarness()
-  await accessHandler(request('POST', { accessCode: 'unknown', password: 'wrong' }), response)
+  await accessHandler(
+    request('POST', { accessCode: 'cfs-9x2a4p', password: 'OCTX2026TV' }),
+    response,
+  )
   assert.equal(response.statusCode, 401)
   assert.match(response.body.error, /could not verify/)
   assert.equal(response.headers['Set-Cookie'], undefined)
@@ -39,7 +42,7 @@ test('invalid access is generic and never sets a session', async () => {
 test('valid access creates an HttpOnly proposal-scoped session', async () => {
   const response = responseHarness()
   await accessHandler(
-    request('POST', { accessCode: 'cfs-9x2a4p', password: 'OCTX2026TV' }),
+    request('POST', { accessCode: 'DEKODExcfs', password: 'OCTX2026TV' }),
     response,
   )
   assert.equal(response.statusCode, 200)
@@ -61,7 +64,7 @@ test('content and proposal chat reject unauthorised requests', async () => {
 test('authorised content is isolated and query answers only from proposal', async () => {
   const accessResponse = responseHarness()
   await accessHandler(
-    request('POST', { accessCode: 'cfs-9x2a4p', password: 'OCTX2026TV' }),
+    request('POST', { accessCode: 'DEKODExcfs', password: 'OCTX2026TV' }),
     accessResponse,
   )
   const cookie = accessResponse.headers['Set-Cookie'].split(';')[0]
@@ -83,7 +86,7 @@ test('authorised content is isolated and query answers only from proposal', asyn
 test('unsupported answers use the contact fallback', async () => {
   const accessResponse = responseHarness()
   await accessHandler(
-    request('POST', { accessCode: 'cfs-9x2a4p', password: 'OCTX2026TV' }),
+    request('POST', { accessCode: 'DEKODExcfs', password: 'OCTX2026TV' }),
     accessResponse,
   )
   const cookie = accessResponse.headers['Set-Cookie'].split(';')[0]
