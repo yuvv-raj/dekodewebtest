@@ -6,8 +6,6 @@ import {
   timingSafeEqual,
 } from 'node:crypto'
 
-const ACCESS_CODE_HASH =
-  '333ba8c3272dab8b1b19ed6320a7a1f18d97bf7df90f83b320766875aa21b7f7'
 const PASSWORD_SALT = 'dekode-cfs-access-v1'
 const PASSWORD_HASH =
   'f423ec88d9d0369cc0fb449151a994f5bbf44945dba0fde9d42ba8a166d8f475'
@@ -60,10 +58,7 @@ export function canAttemptAccess(request) {
   return current.count <= 8
 }
 
-export function verifyCredentials(accessCode, password) {
-  const codeHash = createHash('sha256')
-    .update(String(accessCode || '').trim().toLowerCase())
-    .digest('hex')
+export function verifyCredentials(password) {
   const passwordHash = pbkdf2Sync(
     String(password || ''),
     PASSWORD_SALT,
@@ -71,7 +66,7 @@ export function verifyCredentials(accessCode, password) {
     32,
     'sha256',
   ).toString('hex')
-  return safeEqual(codeHash, ACCESS_CODE_HASH) && safeEqual(passwordHash, PASSWORD_HASH)
+  return safeEqual(passwordHash, PASSWORD_HASH)
 }
 
 export function createSessionCookie(request) {

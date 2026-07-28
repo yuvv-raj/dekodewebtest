@@ -28,8 +28,7 @@ const clean = (value, limit = 4000) =>
 
 const proposal = ${JSON.stringify(proposal)};
 const proposalAssetBase64 = '${proposalAssetBase64}';
-const ACCESS_CODE_HASH = '333ba8c3272dab8b1b19ed6320a7a1f18d97bf7df90f83b320766875aa21b7f7';
-const PASSWORD_HASH = 'f423ec88d9d0369cc0fb449151a994f5bbf44945dba0fde9d42ba8a166d8f475';
+const PASSWORD_HASH = 'e2b2a70c40a9c3f48bcf4b844ebe9a509c34b44ea765aa49aa5b18dd3bd67c9e';
 const PASSWORD_SALT = new TextEncoder().encode('dekode-cfs-access-v1');
 const SESSION_TTL = 7200;
 const attempts = new Map();
@@ -51,7 +50,7 @@ const decodeBase64url = (value) => new TextDecoder().decode(Uint8Array.from(atob
 const sha256 = async (value) => bytesToHex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value)));
 const passwordHash = async (password) => {
   const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']);
-  return bytesToHex(await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: PASSWORD_SALT, iterations: 210000 }, key, 256));
+  return bytesToHex(await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: PASSWORD_SALT, iterations: 100000 }, key, 256));
 };
 const sign = async (value, secret) => {
   const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
@@ -135,9 +134,8 @@ export default {
       if (attempt.count > 8) return privateJson({ ok: false, error: 'We could not verify these access details. Please check them or contact the DEKODE team.' }, 429);
       let payload;
       try { payload = await request.json(); } catch { return privateJson({ ok: false, error: 'We could not verify these access details. Please check them or contact the DEKODE team.' }, 401); }
-      const validCode = await sha256(String(payload.accessCode || '').trim().toLowerCase()) === ACCESS_CODE_HASH;
       const validPassword = await passwordHash(String(payload.password || '')) === PASSWORD_HASH;
-      if (!validCode || !validPassword) return privateJson({ ok: false, error: 'We could not verify these access details. Please check them or contact the DEKODE team.' }, 401);
+      if (!validPassword) return privateJson({ ok: false, error: 'We could not verify these access details. Please check them or contact the DEKODE team.' }, 401);
       const session = await createSession(env);
       console.log('[Proposal audit] Access granted', { proposalId: proposal.id, version: proposal.proposalVersion, at: new Date().toISOString() });
       return privateJson({ ok: true, route: '/proposals/client', proposal: { title: proposal.title, subtitle: proposal.subtitle, sectionCount: proposal.sections.length, version: proposal.proposalVersion } }, 200, { 'set-cookie': 'dekode_proposal_session=' + session + '; Path=/; HttpOnly; SameSite=Strict; Secure; Max-Age=' + SESSION_TTL });

@@ -17,3 +17,18 @@ test('proposal feature flags default on and remain independently disableable', a
   assert.match(app, /VITE_CLIENT_PROPOSALS_ENABLED/)
   assert.match(app, /VITE_PROPOSAL_CHAT_ENABLED/)
 })
+
+test('proposal access is password-only and uses the hosted runtime PBKDF2 limit', async () => {
+  const gateway = await readFile(
+    new URL('../src/proposals/ProposalAccessGateway.jsx', import.meta.url),
+    'utf8',
+  )
+  const workerBuild = await readFile(
+    new URL('../scripts/prepare-sites-build.mjs', import.meta.url),
+    'utf8',
+  )
+  assert.doesNotMatch(gateway, /Proposal access code/)
+  assert.match(gateway, /JSON\.stringify\(\{ password \}\)/)
+  assert.match(workerBuild, /iterations: 100000/)
+  assert.doesNotMatch(workerBuild, /iterations: 210000/)
+})

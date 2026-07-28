@@ -2,14 +2,13 @@ import React, { useState } from 'react'
 import { LockKeyhole, X } from 'lucide-react'
 
 export default function ProposalAccessGateway({ onClose, onAccess }) {
-  const [accessCode, setAccessCode] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = async (event) => {
     event.preventDefault()
-    if (!accessCode.trim() || !password) return
+    if (!password) return
     setIsSubmitting(true)
     setError('')
     try {
@@ -17,10 +16,18 @@ export default function ProposalAccessGateway({ onClose, onAccess }) {
         method: 'POST',
         credentials: 'same-origin',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ accessCode, password }),
+        body: JSON.stringify({ password }),
       })
-      const result = await response.json()
-      if (!response.ok) throw new Error(result.error)
+      const contentType = response.headers.get('content-type') || ''
+      const result = contentType.includes('application/json')
+        ? await response.json()
+        : null
+      if (!response.ok || !result) {
+        throw new Error(
+          result?.error ||
+            'We could not verify these access details. Please check them or contact the DEKODE team.',
+        )
+      }
       await onAccess(result)
     } catch (accessError) {
       setError(
@@ -54,20 +61,9 @@ export default function ProposalAccessGateway({ onClose, onAccess }) {
         <p className="proposal-eyebrow">Private client area</p>
         <h2 id="proposal-access-title">Access your DEKODE proposal</h2>
         <p className="proposal-access-copy">
-          Enter the access details provided by the DEKODE team.
+          Enter the password provided by the DEKODE team.
         </p>
         <form onSubmit={handleSubmit}>
-          <label htmlFor="proposal-access-code">Proposal access code</label>
-          <input
-            id="proposal-access-code"
-            value={accessCode}
-            onChange={(event) => {
-              setAccessCode(event.target.value)
-              setError('')
-            }}
-            autoComplete="username"
-            autoFocus
-          />
           <label htmlFor="proposal-password">Password</label>
           <input
             id="proposal-password"
@@ -78,6 +74,7 @@ export default function ProposalAccessGateway({ onClose, onAccess }) {
               setError('')
             }}
             autoComplete="current-password"
+            autoFocus
           />
           <div className="proposal-access-error" role="alert" aria-live="polite">
             {error}
@@ -85,7 +82,7 @@ export default function ProposalAccessGateway({ onClose, onAccess }) {
           <button
             type="submit"
             className="proposal-primary-button"
-            disabled={isSubmitting || !accessCode.trim() || !password}
+            disabled={isSubmitting || !password}
           >
             {isSubmitting ? 'Verifying…' : 'Access proposal'}
           </button>

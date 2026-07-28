@@ -15,8 +15,8 @@ export default async function handler(request, response) {
     return response.status(429).json({ ok: false, error: genericAccessError })
   }
 
-  const { accessCode, password } = request.body || {}
-  if (!verifyCredentials(accessCode, password)) {
+  const { password } = request.body || {}
+  if (!verifyCredentials(password)) {
     return response.status(401).json({ ok: false, error: genericAccessError })
   }
 
