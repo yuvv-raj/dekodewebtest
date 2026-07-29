@@ -110,6 +110,14 @@ npm run lint
 npm run build
 ```
 
+`npm run dev` includes a development-only bridge for the existing `/api`
+handlers, so password-protected proposals, proposal chat, protected assets, and
+mock lead validation work from the Vite local URL. The bridge reuses the same
+server handlers as the hosted API and uses the server-side
+`PROPOSAL_SESSION_SECRET` when provided. When it is omitted locally, the
+proposal security module supplies its existing development-only fallback; this
+fallback is never permitted in production.
+
 `npm run build` regenerates `src/knowledge/companyKnowledge.json` from the approved sibling `Dekode` company repository before compiling. Voice and text therefore use the same knowledge bundle loaded once at runtime.
 
 ## Current limitations
