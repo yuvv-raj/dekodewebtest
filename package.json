@@ -10,7 +10,7 @@
     "proposal:build": "node scripts/build-proposal-content.mjs",
     "prebuild": "npm run knowledge:build && npm run proposal:build",
     "build": "vite build && node scripts/prepare-sites-build.mjs",
-    "build:vercel": "npm run knowledge:build:optional && npm run proposal:build && vite build",
+    "build:vercel": "vite build",
     "lint": "oxlint",
     "test": "node --test --test-concurrency=1 tests/*.test.js",
     "preview": "vite preview"
