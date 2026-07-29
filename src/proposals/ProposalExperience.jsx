@@ -12,6 +12,7 @@ import {
   MessageCircle,
   Minus,
   Plus,
+  RotateCcw,
   Send,
   Sparkles,
   X,
@@ -241,7 +242,9 @@ export default function ProposalExperience({
   requestedSection,
   clarificationRequest,
   onClearClarification,
-  onOpenChat,
+  isChatOpen,
+  onToggleChat,
+  chatToggleRef,
   onExit,
 }) {
   const [activeIndex, setActiveIndex] = useState(0)
@@ -262,12 +265,21 @@ export default function ProposalExperience({
   const sectionPresentation = presentationData[activeIndex]
 
   const selectSection = (index) => {
+    if (document.activeElement?.closest('.proposal-section-footer')) {
+      document.activeElement.blur()
+    }
+    const resetScroll = () => {
+      document.querySelector('.proposal-experience')?.scrollTo({ top: 0, behavior: 'auto' })
+      document.querySelector('.proposal-content-scroll')?.scrollTo({ top: 0, behavior: 'auto' })
+    }
+    resetScroll()
     setCompleted((current) => new Set([...current, section.id]))
     setActiveIndex(index)
     setNavigationOpen(false)
     setZoom(1)
     setActivePath('all')
-    document.querySelector('.proposal-content-scroll')?.scrollTo({ top: 0, behavior: 'auto' })
+    window.requestAnimationFrame(resetScroll)
+    window.setTimeout(resetScroll, 0)
   }
 
   useEffect(() => {
@@ -290,6 +302,11 @@ export default function ProposalExperience({
     const content = contentRef.current
     if (!content) return
 
+    content.querySelectorAll('svg').forEach((diagram) => {
+      diagram.setAttribute('role', 'img')
+      diagram.setAttribute('aria-label', `${section.navigationLabel} diagram`)
+    })
+
     content.querySelectorAll('.filter-btn').forEach((button) => {
       const path = PATH_BY_LABEL[normaliseText(button.textContent)]
       const isActive = path === activePath
@@ -302,7 +319,16 @@ export default function ProposalExperience({
         activePath !== 'all' && !element.classList.contains(activePath),
       )
     })
-  }, [activeIndex, activePath])
+  }, [activeIndex, activePath, section.navigationLabel])
+
+  useEffect(() => {
+    if (!fullScreenDiagram) return undefined
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') setFullScreenDiagram(false)
+    }
+    document.addEventListener('keydown', closeOnEscape)
+    return () => document.removeEventListener('keydown', closeOnEscape)
+  }, [fullScreenDiagram])
 
   const contentStyle = useMemo(
     () => ({ transform: `scale(${zoom})`, transformOrigin: 'top center' }),
@@ -336,7 +362,15 @@ export default function ProposalExperience({
           </div>
         </div>
         <div className="proposal-header-actions">
-          <button type="button" onClick={onOpenChat}><MessageCircle size={17} /> Ask proposal</button>
+          <button
+            type="button"
+            ref={chatToggleRef}
+            onClick={onToggleChat}
+            aria-expanded={isChatOpen}
+            aria-controls="dekode-chat"
+          >
+            <MessageCircle size={17} /> {isChatOpen ? 'Close chat' : 'Ask proposal'}
+          </button>
           <button type="button" onClick={onExit}><LogOut size={17} /> Exit proposal</button>
         </div>
       </header>
@@ -372,12 +406,18 @@ export default function ProposalExperience({
               className={index === activeIndex ? 'active' : ''}
               onClick={() => selectSection(index)}
               aria-current={index === activeIndex ? 'step' : undefined}
+              aria-label={`${entry.navigationLabel}, ${
+                index === activeIndex
+                  ? 'current section'
+                  : completed.has(entry.id)
+                    ? 'completed'
+                    : 'upcoming'
+              }`}
             >
               <span className="proposal-chapter-number">
-                {completed.has(entry.id) ? <Check size={13} /> : String(index + 1).padStart(2, '0')}
+                {completed.has(entry.id) ? <Check size={13} /> : index + 1}
               </span>
               <span className="proposal-chapter-copy">
-                <small>{index === activeIndex ? 'Current chapter' : `Chapter ${String(index + 1).padStart(2, '0')}`}</small>
                 <strong>{entry.navigationLabel}</strong>
               </span>
             </button>
@@ -389,17 +429,20 @@ export default function ProposalExperience({
         <section className="proposal-content-scroll" aria-labelledby="proposal-current-section">
           <div className="proposal-content-toolbar">
             <div>
-              <span className="proposal-eyebrow">Chapter {String(activeIndex + 1).padStart(2, '0')}</span>
               <h2 id="proposal-current-section">{section.navigationLabel}</h2>
             </div>
             <div aria-label="Content zoom">
               <button type="button" onClick={() => setZoom((value) => Math.max(0.8, value - 0.1))} aria-label="Zoom out"><Minus size={16} /></button>
               <span>{Math.round(zoom * 100)}%</span>
               <button type="button" onClick={() => setZoom((value) => Math.min(1.5, value + 0.1))} aria-label="Zoom in"><Plus size={16} /></button>
+              <button type="button" onClick={() => setZoom(1)} aria-label="Reset zoom to fit"><RotateCcw size={15} /></button>
               {section.id === 'logic' && (
                 <button type="button" onClick={() => setFullScreenDiagram(true)} aria-label="Open diagram full screen"><Maximize2 size={16} /></button>
               )}
             </div>
+          </div>
+          <div className="proposal-section-announcement" aria-live="polite">
+            Now viewing {section.navigationLabel}
           </div>
 
           <AnimatePresence mode="wait">

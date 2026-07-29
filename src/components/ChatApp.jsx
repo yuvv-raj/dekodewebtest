@@ -60,6 +60,7 @@ export default function ChatApp({
   onProposalSection,
   onProposalClarification,
   onCloseProposalChat,
+  isProposalChatOpen = false,
 }) {
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState("");
@@ -122,6 +123,12 @@ export default function ChatApp({
         clearTimeout(voiceStatusTimerRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (!isProposalChatOpen) return undefined;
+    const focusTimer = window.setTimeout(() => composerRef.current?.focus(), 50);
+    return () => window.clearTimeout(focusTimer);
+  }, [isProposalChatOpen]);
 
   useEffect(() => {
     const focusChatWithDraft = (event) => {
@@ -854,8 +861,8 @@ export default function ChatApp({
       <ParticleBackground />
       <div className="brand-logo">DEKODE</div>
       {proposalContext && (
-        <div className="proposal-context-bar" role="status">
-          <span><i /> Answering from your proposal</span>
+        <div className="proposal-context-bar">
+          <span id="proposal-chat-title"><i /> Proposal chat</span>
           <span>
             <button type="button" onClick={onExitProposal}>Exit proposal</button>
             <button type="button" onClick={onCloseProposalChat} aria-label="Close proposal chat"><X size={16} /></button>
