@@ -31,10 +31,11 @@ const PATH_BY_LABEL = {
 }
 
 const normaliseText = (value = '') => value.replace(/\s+/g, ' ').trim()
+const READING_MODE_SCROLL_THRESHOLD = 96
 
 function readPresentationData(html) {
   if (typeof document === 'undefined') {
-    return { title: '', paragraphs: [], takeaways: [], metrics: [], impact: [] }
+    return { title: '', paragraphs: [], metrics: [], impact: [] }
   }
 
   const parsed = new DOMParser().parseFromString(html, 'text/html')
@@ -54,11 +55,7 @@ function readPresentationData(html) {
   const impact = [...content.querySelectorAll('#manual-view .header-section > div > div p')]
     .map((entry) => normaliseText(entry.textContent))
     .filter(Boolean)
-  const takeaways = [...new Set([...paragraphs, ...impact])]
-    .filter((entry) => entry.length > 28)
-    .slice(0, 3)
-
-  return { title, paragraphs, takeaways, metrics, impact }
+  return { title, paragraphs, metrics, impact }
 }
 
 function ProposalImpactVisual({ data, reducedMotion }) {
@@ -149,29 +146,6 @@ function ProcessComparison({ manual, automated, reducedMotion }) {
   )
 }
 
-function SectionTakeaways({ items, reducedMotion }) {
-  if (!items.length) return null
-  return (
-    <motion.aside
-      className="proposal-takeaways"
-      initial={reducedMotion ? false : { opacity: 0, y: 18 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.25 }}
-      aria-labelledby="proposal-takeaways-title"
-    >
-      <div>
-        <span className="proposal-eyebrow">Section summary</span>
-        <h3 id="proposal-takeaways-title">Key Takeaways</h3>
-      </div>
-      <ul>
-        {items.map((item, index) => (
-          <li key={item}><span>{String(index + 1).padStart(2, '0')}</span><p>{item}</p></li>
-        ))}
-      </ul>
-    </motion.aside>
-  )
-}
-
 function ClarificationReview({ request, proposal, section, onClose }) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -253,7 +227,12 @@ export default function ProposalExperience({
   const [zoom, setZoom] = useState(1)
   const [fullScreenDiagram, setFullScreenDiagram] = useState(false)
   const [activePath, setActivePath] = useState('all')
+  const [isReadingMode, setIsReadingMode] = useState(false)
+  const experienceRef = useRef(null)
+  const contentScrollRef = useRef(null)
   const contentRef = useRef(null)
+  const preserveReadingModeRef = useRef(false)
+  const preserveReadingModeUntilRef = useRef(0)
   const shouldReduceMotion = useReducedMotion()
 
   const section = proposal.sections[activeIndex]
@@ -265,12 +244,14 @@ export default function ProposalExperience({
   const sectionPresentation = presentationData[activeIndex]
 
   const selectSection = (index) => {
+    preserveReadingModeRef.current = isReadingMode
+    preserveReadingModeUntilRef.current = isReadingMode ? Date.now() + 500 : 0
     if (document.activeElement?.closest('.proposal-section-footer')) {
       document.activeElement.blur()
     }
     const resetScroll = () => {
-      document.querySelector('.proposal-experience')?.scrollTo({ top: 0, behavior: 'auto' })
-      document.querySelector('.proposal-content-scroll')?.scrollTo({ top: 0, behavior: 'auto' })
+      experienceRef.current?.scrollTo({ top: 0, behavior: 'auto' })
+      contentScrollRef.current?.scrollTo({ top: 0, behavior: 'auto' })
     }
     resetScroll()
     setCompleted((current) => new Set([...current, section.id]))
@@ -289,6 +270,50 @@ export default function ProposalExperience({
   // selectSection intentionally tracks the current section for completion.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requestedSection])
+
+  useEffect(() => {
+    const scroller = contentScrollRef.current
+    if (!scroller) return undefined
+
+    const wideLayout = window.matchMedia('(min-width: 901px)')
+    let animationFrame = 0
+    const updateReadingMode = () => {
+      animationFrame = 0
+      if (!wideLayout.matches) preserveReadingModeRef.current = false
+      if (preserveReadingModeRef.current) {
+        if (Date.now() < preserveReadingModeUntilRef.current) {
+          setIsReadingMode(true)
+          return
+        }
+        if (scroller.scrollTop > READING_MODE_SCROLL_THRESHOLD) {
+          preserveReadingModeRef.current = false
+        } else {
+          setIsReadingMode(true)
+          return
+        }
+      }
+      const nextReadingMode =
+        wideLayout.matches && scroller.scrollTop > READING_MODE_SCROLL_THRESHOLD
+      setIsReadingMode((current) =>
+        current === nextReadingMode ? current : nextReadingMode,
+      )
+    }
+    const scheduleUpdate = () => {
+      if (!animationFrame) {
+        animationFrame = window.requestAnimationFrame(updateReadingMode)
+      }
+    }
+
+    scroller.addEventListener('scroll', scheduleUpdate, { passive: true })
+    wideLayout.addEventListener('change', scheduleUpdate)
+    updateReadingMode()
+
+    return () => {
+      scroller.removeEventListener('scroll', scheduleUpdate)
+      wideLayout.removeEventListener('change', scheduleUpdate)
+      if (animationFrame) window.cancelAnimationFrame(animationFrame)
+    }
+  }, [])
 
   useEffect(() => {
     const robots = document.createElement('meta')
@@ -343,7 +368,11 @@ export default function ProposalExperience({
   }
 
   return (
-    <main className="proposal-experience">
+    <main
+      ref={experienceRef}
+      className={`proposal-experience ${isReadingMode ? 'is-reading-mode' : ''}`}
+      data-reading-mode={isReadingMode ? 'active' : 'normal'}
+    >
       <div className="proposal-ambient proposal-ambient-one" aria-hidden="true" />
       <div className="proposal-ambient proposal-ambient-two" aria-hidden="true" />
       <header className="proposal-experience-header">
@@ -403,7 +432,10 @@ export default function ProposalExperience({
             <button
               type="button"
               key={entry.id}
-              className={index === activeIndex ? 'active' : ''}
+              className={[
+                index === activeIndex ? 'active' : '',
+                completed.has(entry.id) ? 'is-completed' : '',
+              ].filter(Boolean).join(' ')}
               onClick={() => selectSection(index)}
               aria-current={index === activeIndex ? 'step' : undefined}
               aria-label={`${entry.navigationLabel}, ${
@@ -426,7 +458,11 @@ export default function ProposalExperience({
       </div>
 
       <div className="proposal-workspace">
-        <section className="proposal-content-scroll" aria-labelledby="proposal-current-section">
+        <section
+          ref={contentScrollRef}
+          className="proposal-content-scroll"
+          aria-labelledby="proposal-current-section"
+        >
           <div className="proposal-content-toolbar">
             <div>
               <h2 id="proposal-current-section">{section.navigationLabel}</h2>
@@ -469,10 +505,6 @@ export default function ProposalExperience({
                 style={contentStyle}
                 onClick={handleApprovedContentClick}
                 dangerouslySetInnerHTML={{ __html: section.html }}
-              />
-              <SectionTakeaways
-                items={sectionPresentation.takeaways}
-                reducedMotion={shouldReduceMotion}
               />
             </motion.div>
           </AnimatePresence>

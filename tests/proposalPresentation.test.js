@@ -16,11 +16,14 @@ const chat = await readFile(
   'utf8',
 )
 
-test('proposal presentation uses extracted approved content for analytics and takeaways', () => {
+test('proposal presentation uses extracted approved content without generated summaries', () => {
   assert.match(experience, /readPresentationData\(entry\.html\)/)
   assert.match(experience, /ProposalImpactVisual/)
   assert.match(experience, /ProcessComparison/)
-  assert.match(experience, /SectionTakeaways/)
+  assert.doesNotMatch(experience, /SectionTakeaways/)
+  assert.doesNotMatch(experience, /Key Takeaways/)
+  assert.doesNotMatch(experience, /Section summary/)
+  assert.doesNotMatch(styles, /proposal-takeaways/)
   assert.doesNotMatch(experience, /12,600\+ Hours/)
   assert.doesNotMatch(experience, /₹16,00,000/)
 })
@@ -74,6 +77,29 @@ test('proposal navigation and toolbar remain in normal measured flow without cha
   )
   assert.match(styles, /\.proposal-content-toolbar\s*\{[\s\S]*background:\s*#06182b/)
   assert.match(experience, /aria-label="Reset zoom to fit"/)
+})
+
+test('proposal reading mode is thresholded, throttled and responsive', () => {
+  assert.match(experience, /READING_MODE_SCROLL_THRESHOLD\s*=\s*96/)
+  assert.match(experience, /scrollTop\s*>\s*READING_MODE_SCROLL_THRESHOLD/)
+  assert.match(experience, /requestAnimationFrame\(updateReadingMode\)/)
+  assert.match(experience, /preserveReadingModeRef\.current = isReadingMode/)
+  assert.match(
+    experience,
+    /addEventListener\('scroll',\s*scheduleUpdate,\s*\{\s*passive:\s*true\s*\}\)/,
+  )
+  assert.match(experience, /data-reading-mode=\{isReadingMode \? 'active' : 'normal'\}/)
+  assert.match(
+    styles,
+    /@media \(min-width:\s*1024px\)[\s\S]*grid-template-columns:\s*184px minmax\(0,\s*1fr\)/,
+  )
+  assert.match(
+    styles,
+    /proposal-experience\.is-reading-mode[\s\S]*grid-template-rows:\s*64px minmax\(0,\s*1fr\)/,
+  )
+  assert.match(styles, /proposal-section-navigation::before[\s\S]*linear-gradient\(180deg/)
+  assert.match(styles, /@media \(min-width:\s*901px\) and \(max-width:\s*1023px\)/)
+  assert.match(styles, /@media \(max-width:\s*900px\)/)
 })
 
 test('semantic proposal colours and workflow labels meet the explicit contrast contract', () => {
