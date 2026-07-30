@@ -31,6 +31,7 @@ import {
   generateCustomPlatformQuestion,
   generateCustomComplexityQuestion,
 } from "../utils/chatIntelligence";
+import { getIntakeClarification } from "../utils/messageQuality";
 import {
   classifyCompanyIntent,
   createCompanyConversationContext,
@@ -453,6 +454,12 @@ export default function ChatApp({
       ...prev,
       { id: Date.now(), sender: "user", text: userMessage },
     ]);
+
+    const intakeClarification = getIntakeClarification(step, userMessage);
+    if (intakeClarification) {
+      simulateAiTyping(intakeClarification);
+      return;
+    }
 
     // Custom Project Flow
     if (step === "custom_discovery_problem") {
