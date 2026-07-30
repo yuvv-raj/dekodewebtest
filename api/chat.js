@@ -78,7 +78,10 @@ export default async function handler(request, response) {
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: systemInstruction }] },
           contents: buildContents(question, history, context),
-          generationConfig: { temperature: 0.35, maxOutputTokens: 500 },
+          generationConfig: {
+            maxOutputTokens: 1_024,
+            thinkingConfig: { thinkingLevel: 'MINIMAL' },
+          },
         }),
       },
     );
