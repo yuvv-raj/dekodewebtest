@@ -70,6 +70,22 @@ test('loads the generated knowledge object once', () => {
   assert.strictEqual(loadCompanyKnowledge(), loadCompanyKnowledge());
 });
 
+test('answers unsupported company facts directly instead of returning an overview', () => {
+  const founding = generateCompanyResponse(
+    'Did DEKODE company start yesterday?',
+    classifyCompanyIntent('Did DEKODE company start yesterday?'),
+  );
+  assert.match(founding.text, /does not list an exact founding date/i);
+  assert.match(founding.text, /why DEKODE was created/i);
+  assert.doesNotMatch(founding.text, /In short, DEKODE combines/i);
+
+  const leadership = generateCompanyResponse(
+    'Who is the CEO of DEKODE?',
+    classifyCompanyIntent('Who is the CEO of DEKODE?'),
+  );
+  assert.match(leadership.text, /does not name.*CEO/i);
+});
+
 test('does not invent a SaaS offering absent from the company profile', () => {
   const intent = classifyCompanyIntent('Do you build SaaS?');
   const response = generateCompanyResponse('Do you build SaaS?', intent);

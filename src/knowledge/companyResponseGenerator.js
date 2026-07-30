@@ -2,6 +2,7 @@ import { loadCompanyKnowledge } from './companyKnowledgeLoader.js';
 import { findNamedOffering } from './knowledgeIndex.js';
 import { getPanelForTopic } from './visualPanelMapper.js';
 import { getSuggestedQuestions } from './suggestedQuestionGenerator.js';
+import { getKnowledgeGapResponse } from './knowledgeGapResponse.js';
 
 const knowledge = loadCompanyKnowledge();
 const bullets = (items) => items.map((item) => `• ${item}`).join('\n');
@@ -45,7 +46,8 @@ function responseForTopic(topic, message, detectedService) {
 
 export function generateCompanyResponse(message, intent) {
   const topic = intent.topic || 'company';
-  const text = responseForTopic(topic, message, intent.service);
+  const text = getKnowledgeGapResponse(message) ||
+    responseForTopic(topic, message, intent.service);
   return {
     text,
     topic,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Send,
@@ -7,6 +7,8 @@ import {
   Bot,
   Mic,
   ChevronDown,
+  LockKeyhole,
+  X,
 } from "lucide-react";
 import AnimationPanel from "./AnimationPanel";
 import CompanyKnowledgePanel from "./CompanyKnowledgePanel";
@@ -29,6 +31,7 @@ import {
   generateCustomPlatformQuestion,
   generateCustomComplexityQuestion,
 } from "../utils/chatIntelligence";
+import { getIntakeClarification } from "../utils/messageQuality";
 import {
   classifyCompanyIntent,
   createCompanyConversationContext,
@@ -36,6 +39,11 @@ import {
   leaveCompanyConversation,
   rememberCompanyTurn,
 } from "../knowledge";
+import {
+  publishSessionSummary,
+  subscribeToContentChat,
+  subscribeToVoiceOpen,
+} from "../content/ContentToChatBridge";
 
 const PROJECT_OPTIONS = [
   "Mobile App",
@@ -45,7 +53,24 @@ const PROJECT_OPTIONS = [
   "E-commerce Platform",
 ];
 
-export default function ChatApp() {
+function getTimeAwareGreeting(date = new Date()) {
+  const hour = date.getHours();
+  if (hour >= 5 && hour < 12) return "Good morning, ready to shape something new?";
+  if (hour >= 12 && hour < 17) return "Good afternoon, let's warm up a bright idea.";
+  if (hour >= 17 && hour < 21) return "Good evening, let's turn today's spark into a plan.";
+  return "Good night, let's capture the idea before it slips away.";
+}
+
+export default function ChatApp({
+  proposalContext = null,
+  proposalChatEnabled = true,
+  onOpenProposalAccess,
+  onExitProposal,
+  onProposalSection,
+  onProposalClarification,
+  onCloseProposalChat,
+  isProposalChatOpen = false,
+}) {
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -55,6 +80,7 @@ export default function ChatApp() {
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [voiceStatus, setVoiceStatus] = useState("");
   const [voiceTypingState, setVoiceTypingState] = useState("idle");
+  const heroGreeting = useMemo(() => getTimeAwareGreeting(), []);
 
   // States: 'centered' (hero), 'active' (chatting)
   const [step, setStep] = useState("centered");
@@ -73,10 +99,31 @@ export default function ChatApp() {
   );
 
   const scrollRef = useRef(null);
+  const composerRef = useRef(null);
   const companyContextRef = useRef(createCompanyConversationContext());
   const speechProviderRef = useRef(null);
   const committedTranscriptRef = useRef("");
   const voiceStatusTimerRef = useRef(null);
+
+  useEffect(() => {
+    if (proposalContext) {
+      setMessages([
+        {
+          id: Date.now(),
+          sender: "ai",
+          text: "Your proposal is open. Ask me about its process, workflow, constraints, or prototype.",
+        },
+      ]);
+      setStep("proposal");
+      setCompanyPanel(null);
+      companyContextRef.current = createCompanyConversationContext();
+    } else if (step === "proposal") {
+      setMessages([]);
+      setStep("centered");
+    }
+  // The transition is intentionally keyed only to proposal identity.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [proposalContext?.id]);
 
   useEffect(() => {
     speechProviderRef.current = new BrowserSpeechToTextProvider();
@@ -88,12 +135,52 @@ export default function ChatApp() {
   }, []);
 
   useEffect(() => {
+    if (!isProposalChatOpen) return undefined;
+    const focusTimer = window.setTimeout(() => composerRef.current?.focus(), 50);
+    return () => window.clearTimeout(focusTimer);
+  }, [isProposalChatOpen]);
+
+  useEffect(() => {
+    const focusChatWithDraft = (event) => {
+      const prompt = event.detail?.suggestedPrompt;
+      if (!prompt) return;
+      setInputValue(prompt);
+      document.querySelector(".app-container")?.scrollTo({
+        top: 0,
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth",
+      });
+      window.requestAnimationFrame(() => composerRef.current?.focus());
+    };
+    const openVoice = () => {
+      document.querySelector(".app-container")?.scrollTo({ top: 0, behavior: "auto" });
+      setIsVoiceOpen(true);
+    };
+    const unsubscribeChat = subscribeToContentChat(focusChatWithDraft);
+    const unsubscribeVoice = subscribeToVoiceOpen(openVoice);
+    return () => {
+      unsubscribeChat();
+      unsubscribeVoice();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!projectType) {
+      publishSessionSummary("");
+      return;
+    }
+    const details = gatheredTags.slice(1, 3);
+    publishSessionSummary(
+      details.length
+        ? `You are exploring a ${projectType.toLowerCase()} with ${details.join(" and ")}.`
+        : `You are exploring a ${projectType.toLowerCase()} with DEKODE.`,
+    );
+  }, [projectType, gatheredTags]);
+
+  useEffect(() => {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const voiceTypingActive = [
-      "requesting",
-      "listening",
-      "processing",
-    ].includes(voiceTypingState);
+    const voiceTypingActive = ['requesting', 'listening', 'processing'].includes(voiceTypingState);
     if (
       isInputFocused ||
       inputValue ||
@@ -206,18 +293,23 @@ export default function ChatApp() {
     startConversation(option);
   };
 
-  const handleCompanyPrompt = (userMessage) => {
+  const handleCompanyPrompt = async (userMessage) => {
     if (!userMessage.trim() || isTyping) return;
 
     const intent = classifyCompanyIntent(
       userMessage,
       companyContextRef.current,
     );
-    const response = generateCompanyResponse(userMessage, {
+    const fallbackResponse = generateCompanyResponse(userMessage, {
       ...intent,
       isCompanyRelated: true,
       topic: intent.topic || companyContextRef.current.lastTopic || "company",
     });
+
+    const history = messages.slice(-6).map((message) => ({
+      role: message.sender === "ai" ? "model" : "user",
+      text: message.text,
+    }));
 
     setMessages((prev) => [
       ...prev,
@@ -226,13 +318,85 @@ export default function ChatApp() {
     if (step === "centered") setStep("company");
     companyContextRef.current = rememberCompanyTurn(
       companyContextRef.current,
-      response.topic,
+      fallbackResponse.topic,
     );
-    setCompanyPanel(response);
-    simulateAiTyping(response.text, {
-      companyTopic: response.topic,
-      suggestions: response.suggestions,
-    });
+    setCompanyPanel(fallbackResponse);
+    setIsTyping(true);
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ question: userMessage, history }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.answer) throw new Error(result.error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          sender: "ai",
+          text: result.answer,
+          companyTopic: fallbackResponse.topic,
+          suggestions: fallbackResponse.suggestions,
+        },
+      ]);
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          sender: "ai",
+          text: fallbackResponse.text,
+          companyTopic: fallbackResponse.topic,
+          suggestions: fallbackResponse.suggestions,
+        },
+      ]);
+    } finally {
+      setIsTyping(false);
+    }
+  };
+
+  const handleProposalPrompt = async (userMessage) => {
+    if (!userMessage.trim() || isTyping || !proposalChatEnabled) return;
+    setMessages((prev) => [
+      ...prev,
+      { id: Date.now(), sender: "user", text: userMessage },
+    ]);
+    setIsTyping(true);
+    try {
+      const response = await fetch("/api/proposals/query", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ question: userMessage }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          sender: "ai",
+          text: result.answer,
+          proposalSource: result.source,
+          clarificationQuestion: result.canRequestClarification
+            ? userMessage
+            : null,
+        },
+      ]);
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          sender: "ai",
+          text: "I could not access the approved proposal content. Please sign in again or contact the DEKODE team.",
+        },
+      ]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   const handleSendMessage = (e) => {
@@ -253,11 +417,21 @@ export default function ChatApp() {
     const userMessage = inputValue;
     setInputValue("");
 
+    if (proposalContext) {
+      handleProposalPrompt(userMessage);
+      return;
+    }
+
     const companyIntent = classifyCompanyIntent(
       userMessage,
       companyContextRef.current,
     );
-    if (companyIntent.isCompanyRelated) {
+    const isCompanyInformationQuestion =
+      companyIntent.isCompanyRelated ||
+      /\b(price|pricing|cost|budget|quote|timeline|deadline|portfolio|case stud(?:y|ies))\b/i.test(
+        userMessage,
+      );
+    if (isCompanyInformationQuestion) {
       handleCompanyPrompt(userMessage);
       return;
     }
@@ -280,6 +454,12 @@ export default function ChatApp() {
       ...prev,
       { id: Date.now(), sender: "user", text: userMessage },
     ]);
+
+    const intakeClarification = getIntakeClarification(step, userMessage);
+    if (intakeClarification) {
+      simulateAiTyping(intakeClarification);
+      return;
+    }
 
     // Custom Project Flow
     if (step === "custom_discovery_problem") {
@@ -492,6 +672,7 @@ export default function ChatApp() {
         </span>
       )}
       <textarea
+        ref={composerRef}
         rows="1"
         className="chat-input"
         value={inputValue}
@@ -597,11 +778,9 @@ export default function ChatApp() {
             onClick={() => setIsVisualPanelExpanded((expanded) => !expanded)}
             aria-expanded={isVisualPanelExpanded}
             aria-controls="supporting-visual-content"
-            aria-label={
-              isVisualPanelExpanded
-                ? "Collapse supporting visual"
-                : "Expand supporting visual"
-            }
+          aria-label={isVisualPanelExpanded
+            ? "Collapse supporting visual"
+            : "Expand supporting visual"}
           >
             <span>{isVisualPanelExpanded ? "Collapse" : "Expand"}</span>
             <ChevronDown size={18} />
@@ -736,7 +915,18 @@ export default function ChatApp() {
     <>
       <div className="vibrant-background" />
       <ParticleBackground />
-      <div className="brand-logo">DEKODE</div>
+      <a className="brand-logo" href={import.meta.env.BASE_URL || "/"} aria-label="Go to DEKODE home">
+        DEKODE
+      </a>
+      {proposalContext && (
+        <div className="proposal-context-bar">
+          <span id="proposal-chat-title"><i /> Proposal chat</span>
+          <span>
+            <button type="button" onClick={onExitProposal}>Exit proposal</button>
+            <button type="button" onClick={onCloseProposalChat} aria-label="Close proposal chat"><X size={16} /></button>
+          </span>
+        </div>
+      )}
 
       <AnimatePresence mode="wait">
         {step === "centered" ? (
@@ -748,7 +938,9 @@ export default function ChatApp() {
             transition={{ duration: 0.5, ease: "easeInOut" }}
             className="centered-layout"
           >
-            <h1 className="hero-title">Let's DEKODE together</h1>
+            <h1 className="hero-title">
+              {proposalContext ? "Ask about your proposal" : heroGreeting}
+            </h1>
 
             <div className="input-container">
               <form className="chat-input-form" onSubmit={handleSendMessage}>
@@ -773,17 +965,30 @@ export default function ChatApp() {
               </div>
             </div>
 
-            <div className="options-container">
-              {PROJECT_OPTIONS.map((opt) => (
-                <button
-                  key={opt}
-                  className="action-pill"
-                  onClick={() => handleOptionSelect(opt)}
-                >
-                  {opt}
-                </button>
-              ))}
-            </div>
+            {!proposalContext && (
+              <>
+                <div className="options-container">
+                  {PROJECT_OPTIONS.map((opt) => (
+                    <button
+                      key={opt}
+                      className="action-pill"
+                      onClick={() => handleOptionSelect(opt)}
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                  {onOpenProposalAccess && (
+                    <button
+                      type="button"
+                      className="action-pill proposal-entry-button"
+                      onClick={onOpenProposalAccess}
+                    >
+                      <LockKeyhole size={15} /> Access client proposal
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
           </motion.div>
         ) : (
           <motion.div
@@ -838,6 +1043,24 @@ export default function ChatApp() {
                               </button>
                             ))}
                           </motion.div>
+                        )}
+                        {msg.sender === "ai" && msg.proposalSource && (
+                          <button
+                            type="button"
+                            className="proposal-entry-button"
+                            onClick={() => onProposalSection?.(msg.proposalSource.sectionId)}
+                          >
+                            View: {msg.proposalSource.label}
+                          </button>
+                        )}
+                        {msg.sender === "ai" && msg.clarificationQuestion && (
+                          <button
+                            type="button"
+                            className="proposal-entry-button"
+                            onClick={() => onProposalClarification?.(msg.clarificationQuestion)}
+                          >
+                            Contact the team
+                          </button>
                         )}
                       </div>
                     </motion.div>
@@ -997,7 +1220,7 @@ export default function ChatApp() {
               </div>
             </div>
 
-            {renderAnimationCard("responsive-visual-panel")}
+            {renderAnimationCard('responsive-visual-panel')}
           </motion.div>
         )}
       </AnimatePresence>
