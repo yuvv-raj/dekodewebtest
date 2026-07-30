@@ -12,10 +12,11 @@ test('approved proposal text is absent from the client source tree', async () =>
   assert.doesNotMatch(clientSource, /OCTX2026TV/)
 })
 
-test('proposal feature flags default on and remain independently disableable', async () => {
+test('proposal access remains independently disableable without a proposal chat mode', async () => {
   const app = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8')
   assert.match(app, /VITE_CLIENT_PROPOSALS_ENABLED/)
-  assert.match(app, /VITE_PROPOSAL_CHAT_ENABLED/)
+  assert.doesNotMatch(app, /VITE_PROPOSAL_CHAT_ENABLED/)
+  assert.doesNotMatch(app, /proposalChatOpen|onToggleChat|onProposalClarification/)
 })
 
 test('proposal access is password-only and uses the hosted runtime PBKDF2 limit', async () => {

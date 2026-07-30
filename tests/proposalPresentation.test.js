@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { createHash } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 import { test } from 'node:test'
 
@@ -10,25 +11,36 @@ const styles = await readFile(
   new URL('../src/proposals/proposal.css', import.meta.url),
   'utf8',
 )
-const app = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8')
-const chat = await readFile(
-  new URL('../src/components/ChatApp.jsx', import.meta.url),
+const sourceStyles = await readFile(
+  new URL('../src/proposals/sourceStyles.css', import.meta.url),
   'utf8',
 )
+const app = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8')
 
-test('proposal presentation uses extracted approved content without generated summaries', () => {
-  assert.match(experience, /readPresentationData\(entry\.html\)/)
-  assert.match(experience, /ProposalImpactVisual/)
-  assert.match(experience, /ProcessComparison/)
-  assert.doesNotMatch(experience, /SectionTakeaways/)
-  assert.doesNotMatch(experience, /Key Takeaways/)
-  assert.doesNotMatch(experience, /Section summary/)
-  assert.doesNotMatch(styles, /proposal-takeaways/)
-  assert.doesNotMatch(experience, /12,600\+ Hours/)
-  assert.doesNotMatch(experience, /₹16,00,000/)
+test('proposal renders the approved old DEKODE presentation directly', () => {
+  assert.match(experience, /dangerouslySetInnerHTML=\{\{ __html: section\.html \}\}/)
+  assert.match(experience, /className="proposal-original-content"/)
+  assert.match(styles, /@import '\.\/sourceStyles\.css'/)
+  assert.equal(
+    createHash('sha256').update(sourceStyles).digest('hex'),
+    '7904b80b526a24fccaa028c5cbf80409b756631751486725847903d4f73b6d85',
+  )
+  assert.doesNotMatch(experience, /ProposalImpactVisual|ProcessComparison|readPresentationData/)
+  assert.doesNotMatch(experience, /12,600\+ Hours|Legacy Process: Manual Distribution/)
 })
 
-test('approved automated workflow paths retain their original filtering behaviour', () => {
+test('original sidebar navigation switches all four protected sections', () => {
+  assert.match(experience, /querySelectorAll\('\.sidebar-nav-btn'\)/)
+  assert.match(experience, /selectSection\(buttons\.indexOf\(navigationButton\)\)/)
+  assert.match(experience, /aria-current/)
+  assert.match(styles, /\.proposal-original-content \.proposal-sidebar/)
+  assert.doesNotMatch(
+    styles,
+    /\.proposal-original-content \.proposal-sidebar\s*\{[^}]*display:\s*none/s,
+  )
+})
+
+test('approved workflow filters retain the original interactive paths', () => {
   for (const path of [
     'path-skip',
     'path-match',
@@ -44,80 +56,19 @@ test('approved automated workflow paths retain their original filtering behaviou
   assert.match(experience, /aria-pressed/)
 })
 
-test('proposal navigation, diagrams, motion and responsive states extend the site design system', () => {
-  assert.match(styles, /grid-template-columns:\s*repeat\(4,\s*minmax\(0,\s*1fr\)\)/)
-  assert.match(styles, /proposal-comparison-scene/)
-  assert.match(styles, /content-visibility:\s*auto/)
+test('proposal chrome is confidential and contains no client chat controls', () => {
+  assert.match(experience, />\s*Confidential\s*</)
+  assert.doesNotMatch(experience, /Private proposal/i)
+  assert.doesNotMatch(experience, />\s*Client\s*</i)
+  assert.doesNotMatch(experience, /Ask proposal|Proposal chat|Close chat/)
+  assert.doesNotMatch(app, /proposalChatOpen|onToggleChat|onProposalClarification/)
+  assert.match(styles, /\.app-container\.proposal-mode \.chat-viewport[\s\S]*display:\s*none/)
+})
+
+test('restored proposal remains responsive, keyboard-visible, and motion-safe', () => {
   assert.match(styles, /@media \(max-width:\s*900px\)/)
+  assert.match(styles, /@media \(max-width:\s*560px\)/)
   assert.match(styles, /@media \(prefers-reduced-motion:\s*reduce\)/)
   assert.match(styles, /focus-visible/)
-})
-
-test('proposal chat is a state-preserving accessible drawer', () => {
-  assert.match(app, /useState\(false\)/)
-  assert.match(app, /setProposalChatOpen\(\(current\) => !current\)/)
-  assert.match(app, /event\.key === 'Escape'/)
-  assert.match(app, /proposalChatToggleRef\.current\?\.focus\(\)/)
-  assert.match(app, /textarea\[aria-label="Message"\]/)
-  assert.match(app, /aria-hidden=\{proposal && !proposalChatOpen/)
-  assert.match(app, /inert=\{proposal && !proposalChatOpen/)
-  assert.match(chat, /id="proposal-chat-title"/)
-  assert.match(styles, /grid-template-columns:\s*minmax\(0,\s*1fr\)\s*0/)
-  assert.match(styles, /proposal-chat-open[\s\S]*clamp\(360px,\s*31vw,\s*440px\)/)
-  assert.match(styles, /transform:\s*translateX\(100%\)/)
-})
-
-test('proposal navigation and toolbar remain in normal measured flow without chapter copy', () => {
-  assert.doesNotMatch(experience, />Chapter\s/i)
-  assert.doesNotMatch(experience, /Current chapter/)
-  assert.doesNotMatch(experience, /`Chapter \$\{/)
-  assert.doesNotMatch(
-    styles,
-    /\.proposal-section-navigation\s*\{[^}]*position:\s*absolute/s,
-  )
-  assert.match(styles, /\.proposal-content-toolbar\s*\{[\s\S]*background:\s*#06182b/)
-  assert.match(experience, /aria-label="Reset zoom to fit"/)
-})
-
-test('proposal reading mode is thresholded, throttled and responsive', () => {
-  assert.match(experience, /READING_MODE_SCROLL_THRESHOLD\s*=\s*96/)
-  assert.match(experience, /scrollTop\s*>\s*READING_MODE_SCROLL_THRESHOLD/)
-  assert.match(experience, /requestAnimationFrame\(updateReadingMode\)/)
-  assert.match(experience, /preserveReadingModeRef\.current = isReadingMode/)
-  assert.match(
-    experience,
-    /addEventListener\('scroll',\s*scheduleUpdate,\s*\{\s*passive:\s*true\s*\}\)/,
-  )
-  assert.match(experience, /data-reading-mode=\{isReadingMode \? 'active' : 'normal'\}/)
-  assert.match(
-    styles,
-    /@media \(min-width:\s*1024px\)[\s\S]*grid-template-columns:\s*184px minmax\(0,\s*1fr\)/,
-  )
-  assert.match(
-    styles,
-    /proposal-experience\.is-reading-mode[\s\S]*grid-template-rows:\s*64px minmax\(0,\s*1fr\)/,
-  )
-  assert.match(styles, /proposal-section-navigation::before[\s\S]*linear-gradient\(180deg/)
-  assert.match(styles, /@media \(min-width:\s*901px\) and \(max-width:\s*1023px\)/)
-  assert.match(styles, /@media \(max-width:\s*900px\)/)
-})
-
-test('semantic proposal colours and workflow labels meet the explicit contrast contract', () => {
-  for (const token of [
-    '--proposal-positive',
-    '--proposal-negative',
-    '--proposal-neutral',
-    '--proposal-warning',
-    '--proposal-text-primary',
-    '--proposal-text-secondary',
-    '--proposal-surface',
-    '--proposal-border',
-  ]) {
-    assert.match(styles, new RegExp(token))
-  }
-  assert.match(styles, /proposal-approved-automated[\s\S]*proposal-positive-surface/)
-  assert.match(styles, /proposal-approved-manual[\s\S]*proposal-negative-surface/)
-  assert.match(styles, /\.svg-node-text\s*\{[\s\S]*fill:\s*#14283e\s*!important/)
-  assert.match(styles, /\.svg-sub-text\s*\{[\s\S]*fill:\s*#41566d\s*!important/)
-  assert.match(styles, /svg text\[fill="white"\][\s\S]*opacity:\s*1\s*!important/)
+  assert.match(styles, /grid-template-columns:\s*repeat\(4,\s*minmax\(170px,\s*1fr\)\)/)
 })
