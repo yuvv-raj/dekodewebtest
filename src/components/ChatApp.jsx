@@ -859,7 +859,9 @@ export default function ChatApp({
     <>
       <div className="vibrant-background" />
       <ParticleBackground />
-      <div className="brand-logo">DEKODE</div>
+      <a className="brand-logo" href={import.meta.env.BASE_URL || "/"} aria-label="Go to DEKODE home">
+        DEKODE
+      </a>
       {proposalContext && (
         <div className="proposal-context-bar">
           <span id="proposal-chat-title"><i /> Proposal chat</span>

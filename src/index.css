@@ -160,6 +160,15 @@ h1, h2, h3, h4, h5, h6 {
   letter-spacing: 1px;
   color: white;
   z-index: 50;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+.brand-logo:hover,
+.brand-logo:focus-visible {
+  color: var(--color-accent-yellow);
+  opacity: 0.95;
 }
 
 /* Initial Hero */
