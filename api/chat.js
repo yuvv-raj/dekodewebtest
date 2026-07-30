@@ -85,7 +85,12 @@ export default async function handler(request, response) {
 
     const payload = await geminiResponse.json();
     if (!geminiResponse.ok) {
-      console.error('[DEKODE Chat] Gemini request failed.', geminiResponse.status, payload?.error?.status);
+      console.error(
+        '[DEKODE Chat] Gemini request failed.',
+        geminiResponse.status,
+        payload?.error?.status,
+        payload?.error?.message,
+      );
       return response.status(502).json({ ok: false, error: 'The AI assistant is temporarily unavailable.' });
     }
 
