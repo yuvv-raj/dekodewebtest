@@ -970,12 +970,16 @@ export default function ChatApp({
                       {opt}
                     </button>
                   ))}
+                  {onOpenProposalAccess && (
+                    <button
+                      type="button"
+                      className="action-pill proposal-entry-button"
+                      onClick={onOpenProposalAccess}
+                    >
+                      <LockKeyhole size={15} /> Access client proposal
+                    </button>
+                  )}
                 </div>
-                {onOpenProposalAccess && (
-                  <button type="button" className="proposal-entry-button" onClick={onOpenProposalAccess}>
-                    <LockKeyhole size={15} /> Access client proposal
-                  </button>
-                )}
               </>
             )}
           </motion.div>
