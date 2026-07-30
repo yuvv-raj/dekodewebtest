@@ -9,6 +9,11 @@ test('retrieves the most relevant service knowledge instead of the whole website
   assert.ok(matches.every((match) => match.text.length > 0));
 });
 
+test('grounds broad service questions in the DEKODE service catalogue', () => {
+  const matches = retrieveCompanyKnowledge('What services does DEKODE offer?');
+  assert.ok(matches.some((match) => match.id === 'service-catalogue'));
+});
+
 test('builds a bounded context from relevant public knowledge', () => {
   const { context, matches } = formatKnowledgeContext('Which cloud platforms do you support?');
   assert.ok(matches.some((match) => match.id === 'technology'));

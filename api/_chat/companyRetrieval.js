@@ -26,6 +26,13 @@ function makeDocuments() {
       label: 'About DEKODE',
       text: `${companyKnowledge.company.about}\nMission: ${companyKnowledge.company.mission}\nVision: ${companyKnowledge.company.vision}\nBelief: ${companyKnowledge.company.belief}`,
     },
+    {
+      id: 'service-catalogue',
+      label: 'DEKODE services',
+      text: `DEKODE services and offerings:\n${companyKnowledge.services
+        .map((service) => `${service.name}: ${service.summary}`)
+        .join('\n')}`,
+    },
     ...companyKnowledge.services.map((service) => ({
       id: `service-${service.id}`,
       label: service.name,
