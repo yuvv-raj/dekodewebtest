@@ -292,18 +292,23 @@ export default function ChatApp({
     startConversation(option);
   };
 
-  const handleCompanyPrompt = (userMessage) => {
+  const handleCompanyPrompt = async (userMessage) => {
     if (!userMessage.trim() || isTyping) return;
 
     const intent = classifyCompanyIntent(
       userMessage,
       companyContextRef.current,
     );
-    const response = generateCompanyResponse(userMessage, {
+    const fallbackResponse = generateCompanyResponse(userMessage, {
       ...intent,
       isCompanyRelated: true,
       topic: intent.topic || companyContextRef.current.lastTopic || "company",
     });
+
+    const history = messages.slice(-6).map((message) => ({
+      role: message.sender === "ai" ? "model" : "user",
+      text: message.text,
+    }));
 
     setMessages((prev) => [
       ...prev,
@@ -312,13 +317,43 @@ export default function ChatApp({
     if (step === "centered") setStep("company");
     companyContextRef.current = rememberCompanyTurn(
       companyContextRef.current,
-      response.topic,
+      fallbackResponse.topic,
     );
-    setCompanyPanel(response);
-    simulateAiTyping(response.text, {
-      companyTopic: response.topic,
-      suggestions: response.suggestions,
-    });
+    setCompanyPanel(fallbackResponse);
+    setIsTyping(true);
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ question: userMessage, history }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.answer) throw new Error(result.error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          sender: "ai",
+          text: result.answer,
+          companyTopic: fallbackResponse.topic,
+          suggestions: fallbackResponse.suggestions,
+        },
+      ]);
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          sender: "ai",
+          text: fallbackResponse.text,
+          companyTopic: fallbackResponse.topic,
+          suggestions: fallbackResponse.suggestions,
+        },
+      ]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   const handleProposalPrompt = async (userMessage) => {
@@ -390,7 +425,12 @@ export default function ChatApp({
       userMessage,
       companyContextRef.current,
     );
-    if (companyIntent.isCompanyRelated) {
+    const isCompanyInformationQuestion =
+      companyIntent.isCompanyRelated ||
+      /\b(price|pricing|cost|budget|quote|timeline|deadline|portfolio|case stud(?:y|ies))\b/i.test(
+        userMessage,
+      );
+    if (isCompanyInformationQuestion) {
       handleCompanyPrompt(userMessage);
       return;
     }
