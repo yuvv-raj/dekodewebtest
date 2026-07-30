@@ -45,7 +45,7 @@ test('keeps the composer responsive with rotating hints and separate voice typin
   assert.match(chatApp, /const handleOpenDekodeVoice = \(\) =>/);
   assert.match(chatApp, /onClick=\{handleSpeech\}/);
   assert.doesNotMatch(chatApp, /<DekodeVoiceEntry onClick=/);
-  assert.match(indexCss, /\.hero-title\s*\{[^}]*font-size:\s*clamp\(2\.25rem,\s*4\.25vw,\s*3\.5rem\)/s);
+  assert.match(indexCss, /\.hero-title\s*\{[^}]*font-size:\s*clamp\(1\.85rem,\s*3\.4vw,\s*2\.85rem\)/s);
   assert.match(indexCss, /\.chat-mic-btn\s*\{[^}]*width:\s*44px[^}]*height:\s*44px/s);
 });
 

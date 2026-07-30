@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Send,
@@ -52,6 +52,14 @@ const PROJECT_OPTIONS = [
   "E-commerce Platform",
 ];
 
+function getTimeAwareGreeting(date = new Date()) {
+  const hour = date.getHours();
+  if (hour >= 5 && hour < 12) return "Good morning, ready to shape something new?";
+  if (hour >= 12 && hour < 17) return "Good afternoon, let's warm up a bright idea.";
+  if (hour >= 17 && hour < 21) return "Good evening, let's turn today's spark into a plan.";
+  return "Good night, let's capture the idea before it slips away.";
+}
+
 export default function ChatApp({
   proposalContext = null,
   proposalChatEnabled = true,
@@ -71,6 +79,7 @@ export default function ChatApp({
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [voiceStatus, setVoiceStatus] = useState("");
   const [voiceTypingState, setVoiceTypingState] = useState("idle");
+  const heroGreeting = useMemo(() => getTimeAwareGreeting(), []);
 
   // States: 'centered' (hero), 'active' (chatting)
   const [step, setStep] = useState("centered");
@@ -883,7 +892,7 @@ export default function ChatApp({
             className="centered-layout"
           >
             <h1 className="hero-title">
-              {proposalContext ? "Ask about your proposal" : "Let's DEKODE together"}
+              {proposalContext ? "Ask about your proposal" : heroGreeting}
             </h1>
 
             <div className="input-container">
