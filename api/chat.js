@@ -1,11 +1,13 @@
 import { formatKnowledgeContext } from './_chat/companyRetrieval.js';
 import { isLikelyGibberish } from '../src/utils/messageQuality.js';
+import { getKnowledgeGapResponse } from '../src/knowledge/knowledgeGapResponse.js';
 
 const MAX_QUESTION_LENGTH = 1_200;
 const MAX_HISTORY_MESSAGES = 6;
 const MAX_HISTORY_MESSAGE_LENGTH = 600;
 const WINDOW_MS = 60_000;
 const MAX_REQUESTS_PER_WINDOW = 20;
+const RETRYABLE_STATUSES = new Set([408, 429, 500, 502, 503, 504]);
 const rateLimit = new Map();
 
 const systemInstruction = `You are DEKODE's helpful website assistant. Answer the visitor's question directly, using only the supplied public DEKODE knowledge.
@@ -56,6 +58,26 @@ function extractAnswer(payload) {
     .trim();
 }
 
+const wait = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+
+async function requestGemini({ apiKey, model, question, history, context }) {
+  return fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
+    {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-goog-api-key': apiKey },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: systemInstruction }] },
+        contents: buildContents(question, history, context),
+        generationConfig: {
+          maxOutputTokens: 1_024,
+          thinkingConfig: { thinkingLevel: 'MINIMAL' },
+        },
+      }),
+    },
+  );
+}
+
 export default async function handler(request, response) {
   if (request.method !== 'POST') return response.status(405).json({ ok: false, error: 'Method not allowed.' });
   if (!requestIsAllowed(request)) return response.status(429).json({ ok: false, error: 'Please wait a moment before sending another message.' });
@@ -75,43 +97,75 @@ export default async function handler(request, response) {
 
   const history = Array.isArray(request.body?.history) ? request.body.history : [];
   const { matches, context } = formatKnowledgeContext(question);
-  const model = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
-
-  try {
-    const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
-      {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', 'x-goog-api-key': apiKey },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: systemInstruction }] },
-          contents: buildContents(question, history, context),
-          generationConfig: {
-            maxOutputTokens: 1_024,
-            thinkingConfig: { thinkingLevel: 'MINIMAL' },
-          },
-        }),
-      },
-    );
-
-    const payload = await geminiResponse.json();
-    if (!geminiResponse.ok) {
-      console.error(
-        '[DEKODE Chat] Gemini request failed.',
-        geminiResponse.status,
-        payload?.error?.status,
-        payload?.error?.message,
-      );
-      return response.status(502).json({ ok: false, error: 'The AI assistant is temporarily unavailable.' });
-    }
-
-    const answer = extractAnswer(payload);
-    if (!answer) return response.status(502).json({ ok: false, error: 'The AI assistant could not generate a reply.' });
+  const knowledgeGapAnswer = getKnowledgeGapResponse(question);
+  if (knowledgeGapAnswer) {
     return response.status(200).json({
       ok: true,
-      answer,
+      answer: knowledgeGapAnswer,
       sources: matches.map(({ id, label }) => ({ id, label })),
     });
+  }
+
+  const primaryModel = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
+  const fallbackModel = process.env.GEMINI_FALLBACK_MODEL || 'gemini-3.5-flash-lite';
+  const attempts = [primaryModel, primaryModel, fallbackModel];
+  let lastFailure = null;
+
+  try {
+    for (let index = 0; index < attempts.length; index += 1) {
+      const model = attempts[index];
+      try {
+        const geminiResponse = await requestGemini({
+          apiKey,
+          model,
+          question,
+          history,
+          context,
+        });
+        const payload = await geminiResponse.json();
+
+        if (geminiResponse.ok) {
+          const answer = extractAnswer(payload);
+          if (answer) {
+            return response.status(200).json({
+              ok: true,
+              answer,
+              sources: matches.map(({ id, label }) => ({ id, label })),
+              model,
+            });
+          }
+          lastFailure = { model, status: 502, providerStatus: 'EMPTY_RESPONSE' };
+        } else {
+          lastFailure = {
+            model,
+            status: geminiResponse.status,
+            providerStatus: payload?.error?.status,
+            message: payload?.error?.message,
+          };
+        }
+      } catch (error) {
+        lastFailure = {
+          model,
+          status: 503,
+          providerStatus: 'CONNECTION_ERROR',
+          message: error?.name,
+        };
+      }
+
+      const canRetry = RETRYABLE_STATUSES.has(lastFailure.status) &&
+        index < attempts.length - 1;
+      if (!canRetry) break;
+      await wait(400 * (2 ** index) + Math.floor(Math.random() * 150));
+    }
+
+    console.error(
+      '[DEKODE Chat] Gemini attempts failed.',
+      lastFailure?.model,
+      lastFailure?.status,
+      lastFailure?.providerStatus,
+      lastFailure?.message,
+    );
+    return response.status(502).json({ ok: false, error: 'The AI assistant is temporarily unavailable.' });
   } catch (error) {
     console.error('[DEKODE Chat] Gemini connection failed.', error?.name);
     return response.status(502).json({ ok: false, error: 'The AI assistant is temporarily unavailable.' });

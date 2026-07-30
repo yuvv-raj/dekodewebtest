@@ -24,7 +24,7 @@ function makeDocuments() {
     {
       id: 'company-overview',
       label: 'About DEKODE',
-      text: `${companyKnowledge.company.about}\nMission: ${companyKnowledge.company.mission}\nVision: ${companyKnowledge.company.vision}\nBelief: ${companyKnowledge.company.belief}`,
+      text: `${companyKnowledge.company.about}\nMission: ${companyKnowledge.company.mission}\nWhy DEKODE exists: ${companyKnowledge.company.origin}\nVision: ${companyKnowledge.company.vision}\nBelief: ${companyKnowledge.company.belief}`,
     },
     {
       id: 'service-catalogue',

@@ -20,3 +20,8 @@ test('builds a bounded context from relevant public knowledge', () => {
   assert.match(context, /AWS/);
   assert.ok(context.length <= 7000);
 });
+
+test('includes the old website origin story in company context', () => {
+  const { context } = formatKnowledgeContext('Why was DEKODE started?');
+  assert.match(context, /businesses that knew they needed to evolve/i);
+});
