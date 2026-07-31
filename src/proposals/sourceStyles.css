@@ -385,3 +385,44 @@
 .filter-btn.active span {
   opacity: 0.9;
 }
+
+/* Architecture View Container styles */
+.architecture-view-container {
+  max-width: 1200px;
+  margin: 12px auto 40px auto;
+  padding: 20px 24px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  border: 1px solid #e2e8f0;
+  text-align: center;
+}
+
+.architecture-view-container h2 {
+  font-size: 28px;
+  font-weight: 800;
+  color: #053364;
+  margin-bottom: 24px;
+  letter-spacing: -0.5px;
+}
+
+.architecture-image {
+  width: 100%;
+  max-height: calc(100vh - 280px);
+  object-fit: contain;
+  border-radius: 12px;
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .architecture-view-container {
+    padding: 16px;
+    margin: 16px auto;
+    border-radius: 12px;
+  }
+
+  .architecture-view-container h2 {
+    font-size: 20px;
+    margin-bottom: 16px;
+  }
+}

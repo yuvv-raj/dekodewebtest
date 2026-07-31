@@ -23,13 +23,13 @@ test('proposal renders the approved old DEKODE presentation directly', () => {
   assert.match(styles, /@import '\.\/sourceStyles\.css'/)
   assert.equal(
     createHash('sha256').update(sourceStyles).digest('hex'),
-    '7904b80b526a24fccaa028c5cbf80409b756631751486725847903d4f73b6d85',
+    'f0248856e15d32ff00e0870cb3ec48ccf6cf91b7213ab065e3b44f3fbee53acf',
   )
   assert.doesNotMatch(experience, /ProposalImpactVisual|ProcessComparison|readPresentationData/)
   assert.doesNotMatch(experience, /12,600\+ Hours|Legacy Process: Manual Distribution/)
 })
 
-test('original sidebar navigation switches all four protected sections', () => {
+test('original sidebar navigation switches all five protected sections', () => {
   assert.match(experience, /querySelectorAll\('\.sidebar-nav-btn'\)/)
   assert.match(experience, /selectSection\(buttons\.indexOf\(navigationButton\)\)/)
   assert.match(experience, /aria-current/)
@@ -38,6 +38,9 @@ test('original sidebar navigation switches all four protected sections', () => {
     styles,
     /\.proposal-original-content \.proposal-sidebar\s*\{[^}]*display:\s*none/s,
   )
+  assert.match(experience, /proposal\.sections\.length/)
+  assert.match(sourceStyles, /\.architecture-view-container/)
+  assert.match(sourceStyles, /\.architecture-image/)
 })
 
 test('approved workflow filters retain the original interactive paths', () => {
@@ -70,5 +73,5 @@ test('restored proposal remains responsive, keyboard-visible, and motion-safe', 
   assert.match(styles, /@media \(max-width:\s*560px\)/)
   assert.match(styles, /@media \(prefers-reduced-motion:\s*reduce\)/)
   assert.match(styles, /focus-visible/)
-  assert.match(styles, /grid-template-columns:\s*repeat\(4,\s*minmax\(170px,\s*1fr\)\)/)
+  assert.match(styles, /grid-template-columns:\s*repeat\(5,\s*minmax\(170px,\s*1fr\)\)/)
 })

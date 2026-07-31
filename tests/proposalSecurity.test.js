@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict'
+import { createHash } from 'node:crypto'
 import { test } from 'node:test'
 import accessHandler from '../api/proposals/access.js'
+import assetHandler from '../api/proposals/asset.js'
 import contentHandler from '../api/proposals/content.js'
 import logoutHandler from '../api/proposals/logout.js'
 import queryHandler from '../api/proposals/query.js'
@@ -59,6 +61,36 @@ test('content and proposal chat reject unauthorised requests', async () => {
   const queryResponse = responseHarness()
   await queryHandler(request('POST', { question: 'What is the workflow?' }), queryResponse)
   assert.equal(queryResponse.statusCode, 401)
+
+  const assetResponse = responseHarness()
+  await assetHandler(
+    { ...request('GET'), url: '/api/proposals/asset?asset=architecture' },
+    assetResponse,
+  )
+  assert.equal(assetResponse.statusCode, 401)
+})
+
+test('authorised architecture diagram stays behind the proposal session', async () => {
+  const accessResponse = responseHarness()
+  await accessHandler(
+    request('POST', { password: 'OCTX2026TV' }),
+    accessResponse,
+  )
+  const cookie = accessResponse.headers['Set-Cookie'].split(';')[0]
+  const assetResponse = responseHarness()
+  await assetHandler(
+    {
+      ...request('GET', {}, cookie),
+      url: '/api/proposals/asset?asset=architecture',
+    },
+    assetResponse,
+  )
+  assert.equal(assetResponse.statusCode, 200)
+  assert.equal(assetResponse.headers['Content-Type'], 'image/png')
+  assert.equal(
+    createHash('sha256').update(assetResponse.body).digest('hex'),
+    '70e06e61dfca226857c4324557fa9a1006db4e782257611281e4893a7ee6a26a',
+  )
 })
 
 test('authorised content is isolated and query answers only from proposal', async () => {

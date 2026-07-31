@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import './ProposalCFS.css';
 import prototypeImage from './image.png';
+import archImage from './arch.png';
 
 const ProposalCFS = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -91,6 +92,12 @@ const ProposalCFS = () => {
             onClick={() => setView('logic')}
           >
             Allocation Logic Flow
+          </button>
+          <button
+            className={`sidebar-nav-btn ${view === 'architecture' ? 'active' : ''}`}
+            onClick={() => setView('architecture')}
+          >
+            Architecture Diagram
           </button>
         </div>
       </div>
@@ -218,6 +225,19 @@ const ProposalCFS = () => {
           </div>
         )}
 
+        {view === 'architecture' && (
+          <div className="architecture-view-container">
+            <h2>OptiFlow Architecture Diagram</h2>
+
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <img
+                src={archImage}
+                alt="OptiFlow Architecture Diagram"
+                className="architecture-image"
+              />
+            </div>
+          </div>
+        )}
 
       {/* DETAILED LOGIC FLOW VIEW */}
       {view === 'logic' && (

@@ -11,7 +11,7 @@ const projectRoot = resolve(fileURLToPath(new URL('..', import.meta.url)))
 const sourcePath = resolve(projectRoot, 'api/_proposal/source/ProposalCFS.jsx')
 const outputPath = resolve(projectRoot, 'api/_proposal/generatedContent.js')
 const expectedSourceHash =
-  'a0288f271f146b91c7864416f6a2c923ddff85368720c8ccd2453d0994927f34'
+  'a72f03e37d39321a6c44f9ab318a5023efadb8c5dc0f882613ed3436088068c4'
 
 const source = await readFile(sourcePath, 'utf8')
 const sourceHash = createHash('sha256').update(source).digest('hex')
@@ -33,6 +33,7 @@ const serverRenderableSource = source
   .replace("import React, { useState } from 'react';", 'const React = globalThis.__proposalReact; const { useState } = React;')
   .replace("import './ProposalCFS.css';", '')
   .replace("import prototypeImage from './image.png';", "const prototypeImage = '/api/proposals/asset';")
+  .replace("import archImage from './arch.png';", "const archImage = '/api/proposals/asset?asset=architecture';")
   .replace('const ProposalCFS = () => {', "const ProposalCFS = ({ initialView = 'manual' }) => {")
   .replace('const [isAuthenticated, setIsAuthenticated] = useState(false);', 'const [isAuthenticated] = useState(true);')
   .replace("const [view, setView] = useState('manual');", 'const [view, setView] = useState(initialView);')
@@ -58,12 +59,13 @@ const selfContainedCode = transformed.code.replace(
 const moduleUrl = `data:text/javascript;base64,${Buffer.from(selfContainedCode).toString('base64')}`
 const { default: Proposal } = await import(moduleUrl)
 
-const sectionOrder = ['manual', 'automated', 'prototype', 'logic']
+const sectionOrder = ['manual', 'automated', 'prototype', 'logic', 'architecture']
 const navigationLabels = {
   manual: 'Current Process: Manual',
   automated: 'Proposed Process: OptiFlow',
   prototype: 'Prototype',
   logic: 'Allocation Logic Flow',
+  architecture: 'Architecture Diagram',
 }
 
 const sections = sectionOrder.map((id, index) => ({
@@ -82,8 +84,8 @@ const proposal = {
   clientId: 'cfs',
   title: 'Centre For Sight',
   subtitle: 'Inventory & Distribution System',
-  proposalVersion: '1.0.0',
-  approvedAt: '2026-07-28',
+  proposalVersion: '1.1.0',
+  approvedAt: '2026-07-31',
   sourceCommit: process.env.VERCEL_GIT_COMMIT_SHA || process.env.GITHUB_SHA || 'source-snapshot',
   sourceChecksum: sourceHash,
   contentChecksum,

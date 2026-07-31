@@ -3,6 +3,8 @@ import {
   createSessionCookie,
   genericAccessError,
   privateHeaders,
+  PROPOSAL_ID,
+  PROPOSAL_VERSION,
   verifyCredentials,
 } from '../_proposal/security.js'
 
@@ -22,8 +24,8 @@ export default async function handler(request, response) {
 
   response.setHeader('Set-Cookie', createSessionCookie(request))
   console.info('[Proposal audit] Access granted.', {
-    proposalId: 'cfs-2026-optiflow',
-    version: '1.0.0',
+    proposalId: PROPOSAL_ID,
+    version: PROPOSAL_VERSION,
     at: new Date().toISOString(),
   })
   return response.status(200).json({
@@ -32,8 +34,8 @@ export default async function handler(request, response) {
     proposal: {
       title: 'Centre For Sight',
       subtitle: 'Inventory & Distribution System',
-      sectionCount: 4,
-      version: '1.0.0',
+      sectionCount: 5,
+      version: PROPOSAL_VERSION,
     },
   })
 }

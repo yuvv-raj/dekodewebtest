@@ -12,6 +12,8 @@ const PASSWORD_HASH =
 const SESSION_TTL_SECONDS = 60 * 60 * 2
 const COOKIE_NAME = 'dekode_proposal_session'
 const attempts = new Map()
+export const PROPOSAL_ID = 'cfs-2026-optiflow'
+export const PROPOSAL_VERSION = '1.1.0'
 
 const asBuffer = (value) => Buffer.from(String(value), 'utf8')
 const safeEqual = (left, right) => {
@@ -72,8 +74,8 @@ export function verifyCredentials(password) {
 export function createSessionCookie(request) {
   const now = Math.floor(Date.now() / 1000)
   const payload = encode({
-    proposalId: 'cfs-2026-optiflow',
-    version: '1.0.0',
+    proposalId: PROPOSAL_ID,
+    version: PROPOSAL_VERSION,
     issuedAt: now,
     expiresAt: now + SESSION_TTL_SECONDS,
     nonce: randomBytes(16).toString('hex'),
@@ -106,8 +108,8 @@ export function readSession(request) {
   try {
     const session = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'))
     if (
-      session.proposalId !== 'cfs-2026-optiflow' ||
-      session.version !== '1.0.0' ||
+      session.proposalId !== PROPOSAL_ID ||
+      session.version !== PROPOSAL_VERSION ||
       session.expiresAt <= Math.floor(Date.now() / 1000)
     ) {
       return null

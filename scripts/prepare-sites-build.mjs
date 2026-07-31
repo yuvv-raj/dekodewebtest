@@ -9,6 +9,8 @@ const clientRoot = resolve(distRoot, 'client');
 const serverRoot = resolve(distRoot, 'server');
 const proposalAsset = await readFile(resolve(projectRoot, 'api/_proposal/source/image.png'));
 const proposalAssetBase64 = proposalAsset.toString('base64');
+const architectureAsset = await readFile(resolve(projectRoot, 'api/_proposal/source/arch.png'));
+const architectureAssetBase64 = architectureAsset.toString('base64');
 
 await mkdir(clientRoot, { recursive: true });
 await mkdir(serverRoot, { recursive: true });
@@ -28,6 +30,7 @@ const clean = (value, limit = 4000) =>
 
 const proposal = ${JSON.stringify(proposal)};
 const proposalAssetBase64 = '${proposalAssetBase64}';
+const architectureAssetBase64 = '${architectureAssetBase64}';
 const PASSWORD_HASH = 'e2b2a70c40a9c3f48bcf4b844ebe9a509c34b44ea765aa49aa5b18dd3bd67c9e';
 const PASSWORD_SALT = new TextEncoder().encode('dekode-cfs-access-v1');
 const SESSION_TTL = 7200;
@@ -157,7 +160,10 @@ export default {
     if (requestUrl.pathname === '/api/proposals/asset') {
       if (request.method !== 'GET') return new Response(null, { status: 405, headers: privateHeaders });
       if (!await readSession(request, env)) return new Response(null, { status: 401, headers: privateHeaders });
-      const bytes = Uint8Array.from(atob(proposalAssetBase64), (character) => character.charCodeAt(0));
+      const assetBase64 = requestUrl.searchParams.get('asset') === 'architecture'
+        ? architectureAssetBase64
+        : proposalAssetBase64;
+      const bytes = Uint8Array.from(atob(assetBase64), (character) => character.charCodeAt(0));
       return new Response(bytes, { headers: { ...privateHeaders, 'content-type': 'image/png' } });
     }
     if (requestUrl.pathname === '/api/proposals/logout') {
