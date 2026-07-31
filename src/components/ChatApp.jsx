@@ -57,6 +57,11 @@ function getTimeAwareGreeting(date = new Date()) {
   return "Good night, let's capture the idea before it slips away.";
 }
 
+const PROJECT_OPTION_ROWS = [
+  PROJECT_OPTIONS.slice(0, 5),
+  PROJECT_OPTIONS.slice(5),
+];
+
 export default function ChatApp({
   proposalContext = null,
   proposalChatEnabled = true,
@@ -967,23 +972,38 @@ export default function ChatApp({
             {!proposalContext && (
               <>
                 <div className="options-container">
-                  {PROJECT_OPTIONS.map((option) => (
-                    <button
-                      key={option.label}
-                      className="action-pill"
-                      onClick={() => handleOptionSelect(option.label)}
+                  {PROJECT_OPTION_ROWS.map((options, rowIndex) => (
+                    <div
+                      key={rowIndex}
+                      className="option-row"
+                      role="group"
+                      aria-label={rowIndex === 0 ? "AI solutions" : "Digital solutions"}
                     >
-                      {option.label}
-                    </button>
+                      {options.map((option) => (
+                        <button
+                          key={option.label}
+                          className="action-pill"
+                          onClick={() => handleOptionSelect(option.label)}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
                   ))}
                   {onOpenProposalAccess && (
-                    <button
-                      type="button"
-                      className="action-pill proposal-entry-button"
-                      onClick={onOpenProposalAccess}
+                    <div
+                      className="option-row option-row-portal"
+                      role="group"
+                      aria-label="Client portal"
                     >
-                      <LockKeyhole size={15} /> Access Client Portal
-                    </button>
+                      <button
+                        type="button"
+                        className="action-pill proposal-entry-button"
+                        onClick={onOpenProposalAccess}
+                      >
+                        <LockKeyhole size={15} /> Client Portal
+                      </button>
+                    </div>
                   )}
                 </div>
               </>
