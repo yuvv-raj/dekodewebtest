@@ -15,6 +15,7 @@
     "name": "DEKODE",
     "about": "DEKODE helps businesses and communities modernise their systems, adopt AI with confidence, and build digital products that teams actually want to use. We handle the complexity so you don’t have to: from strategy and architecture through to build, security, and long-term support.",
     "mission": "We make technology work for the people who use it.",
+    "origin": "We started DEKODE because we kept seeing the same problem: businesses that knew they needed to evolve but couldn’t find a partner that made the process feel manageable. The big IT firms were too expensive, too impersonal, and spoke a language most teams couldn’t follow. Meanwhile, the technology gap kept growing. We believed there was a better way. Practical technology, delivered simply, at a price that respects your budget. No jargon. No bloated scopes. No disappearing after launch. That belief still drives everything we do.",
     "vision": "DEKODE is building toward becoming a trusted global technology partner for businesses navigating that shift. Our goal is simple: make digital transformation and AI adoption accessible, affordable, and genuinely useful for the people it’s meant to serve.",
     "belief": "Progress only counts when it reaches everyone."
   },
@@ -98,6 +99,74 @@
       "audience": "Businesses that need their systems to be stable, secure, and professionally managed, without building a full in-house IT team."
     }
   ],
+  "solutionAreas": [
+    {
+      "id": "ai-strategy",
+      "name": "AI Strategy & Consulting",
+      "serviceId": "ai-strategy",
+      "summary": "DEKODE helps teams assess AI readiness, identify useful opportunities, prioritise use cases, review data and workflows, and build a responsible, vendor-neutral AI roadmap."
+    },
+    {
+      "id": "generative-ai",
+      "name": "Generative AI",
+      "serviceId": "custom-ai",
+      "summary": "DEKODE builds generative AI solutions tailored to business workflows, including internal copilots, intelligent search, knowledge systems, and AI-powered support and operations tools."
+    },
+    {
+      "id": "agentic-ai",
+      "name": "Agentic AI",
+      "serviceId": "custom-ai",
+      "summary": "DEKODE designs AI agents for defined business workflows, connecting them to approved tools, APIs, and knowledge while accounting for permissions, human oversight, privacy, safety, and governance."
+    },
+    {
+      "id": "predictive-ai",
+      "name": "Predictive AI",
+      "serviceId": "custom-ai",
+      "summary": "DEKODE develops custom machine learning solutions that use relevant business data to support forecasting, prioritisation, and better operational decisions. The right approach depends on the use case and data readiness."
+    },
+    {
+      "id": "analytical-ai",
+      "name": "Analytical AI",
+      "serviceId": "custom-ai",
+      "summary": "DEKODE applies AI and machine learning to business data to surface useful patterns and decision support, delivered through practical workflows, dashboards, or internal tools."
+    },
+    {
+      "id": "mobile-app",
+      "name": "Mobile App",
+      "serviceId": "web-mobile",
+      "summary": "DEKODE designs and develops iOS and Android mobile apps with user journeys, prototypes, accessible interfaces, integrations, security, and production-ready delivery."
+    },
+    {
+      "id": "web-app",
+      "name": "Web App",
+      "serviceId": "web-mobile",
+      "summary": "DEKODE builds web applications, dashboards, and internal portals around real user workflows, from UX and rapid prototyping through secure production delivery."
+    },
+    {
+      "id": "cloud-solutions",
+      "name": "Cloud Solutions",
+      "serviceId": "cloud-it",
+      "summary": "DEKODE provides cloud strategy, architecture, migration, monitoring, security hardening, and ongoing optimisation across AWS, Azure, and Google Cloud Platform."
+    },
+    {
+      "id": "process-automation",
+      "name": "Process Automation",
+      "serviceId": "integrations",
+      "summary": "DEKODE automates repetitive business processes across operations, finance, and support, connecting the required systems so information moves cleanly and teams spend less time on manual work."
+    },
+    {
+      "id": "systems-integration",
+      "name": "Systems Integration",
+      "serviceId": "integrations",
+      "summary": "DEKODE connects business systems through custom APIs and third-party integrations, including payment, chat, text, and email services, with reliable data flows and maintainable delivery."
+    },
+    {
+      "id": "ecommerce",
+      "name": "E-commerce",
+      "serviceId": "ecommerce",
+      "summary": "DEKODE builds scalable e-commerce platforms with intelligent search, personalised recommendations, inventory and fulfilment automation, payment integrations, and performance-focused user experiences."
+    }
+  ],
   "industries": [
     "education",
     "healthcare",
@@ -144,7 +213,24 @@
     "Security posture reviews, threat modelling, and risk reduction",
     "Ongoing managed IT support, patching, and performance optimisation"
   ],
-  "whyChooseUs": [],
+  "whyChooseUs": [
+    {
+      "name": "Simple",
+      "description": "We communicate in plain language, keep scope focused, and prioritise what actually moves your business forward."
+    },
+    {
+      "name": "Transparent",
+      "description": "You'll always know what we're building, what it costs, and how we'll measure success. No surprises."
+    },
+    {
+      "name": "Accountable",
+      "description": "We own the outcome, not just the output. If something isn't working, we fix it."
+    },
+    {
+      "name": "Reliable",
+      "description": "Security and stability aren't afterthoughts. They're built into every system from day one, with ongoing support to keep things running."
+    }
+  ],
   "values": [
     {
       "name": "Practical AI, not hype",

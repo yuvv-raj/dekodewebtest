@@ -81,6 +81,23 @@ export function generateAudienceResponse(userMessage, context) {
   if (tone === 'uncertain') {
     return "No worries! Think about who would use this daily — is it for your own team, paying customers, or the general public?";
   }
+
+  const projectFollowUps = {
+    'AI Strategy & Consulting': "Got it. Which business goals, workflows, and available data should we review first to shape a practical AI roadmap?",
+    'Generative AI': "Got it. Which documents, knowledge sources, or content should the solution work with, and what must it never generate?",
+    'Agentic AI': "Got it. Which tools or systems should the agent use, and where should a person review or approve its actions?",
+    'Predictive AI': "Got it. What historical data is available, and which forecast or decision will define whether the model is useful?",
+    'Analytical AI': "Got it. Which data sources and KPIs should the analysis connect, and how should users act on the insight?",
+    'Cloud Solutions': "Got it. What runs today, where is it hosted, and which reliability, security, or scaling requirements matter most?",
+    'Process Automation': "Got it. What are the current steps, approvals, and exceptions in that workflow?",
+    'Systems Integration': "Got it. Which systems, APIs, and data fields need to stay in sync, and which system should be the source of truth?",
+    'Mobile App': "Got it. Which mobile features are essential, such as accounts, notifications, payments, camera, or location?",
+    'Web App': "Got it. Which workflows and user roles must the web app support first?",
+    'E-commerce': "Got it. Do you need specific payment gateways, inventory management, subscriptions, or fulfilment integrations?",
+  };
+  if (projectFollowUps[context.projectType]) {
+    return projectFollowUps[context.projectType];
+  }
   
   if (domain === 'healthcare') {
     return "Got it — healthcare is a highly impactful space! HIPAA compliance, role-based access, and robust data privacy will likely be important. What specific features are absolute must-haves for your users?";
@@ -97,7 +114,7 @@ export function generateAudienceResponse(userMessage, context) {
   }
   
   if (context.projectType?.includes('AI')) {
-    return "Got it! Does this agent need to connect to any external tools or databases (like Slack, CRM, or a custom API)?";
+    return "Got it! Which data, tools, or workflows should the AI solution connect to?";
   } else if (context.projectType?.includes('E-commerce')) {
     return "Got it! Do you need any specific payment gateways, inventory management, or subscription features?";
   }

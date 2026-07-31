@@ -5,6 +5,7 @@ import { readFile } from 'node:fs/promises';
 const indexCss = await readFile(new URL('../src/index.css', import.meta.url), 'utf8');
 const voiceCss = await readFile(new URL('../src/components/voice/voice.css', import.meta.url), 'utf8');
 const chatApp = await readFile(new URL('../src/components/ChatApp.jsx', import.meta.url), 'utf8');
+const projectOptions = await readFile(new URL('../src/config/projectOptions.js', import.meta.url), 'utf8');
 
 test('uses dynamic viewport units and safe-area spacing for app and voice surfaces', () => {
   assert.match(indexCss, /height:\s*100dvh/);
@@ -45,7 +46,19 @@ test('keeps the composer responsive with rotating hints and separate voice typin
   assert.match(chatApp, /const handleOpenDekodeVoice = \(\) =>/);
   assert.match(chatApp, /onClick=\{handleSpeech\}/);
   assert.doesNotMatch(chatApp, /<DekodeVoiceEntry onClick=/);
-  assert.match(indexCss, /\.hero-title\s*\{[^}]*font-size:\s*clamp\(2\.25rem,\s*4\.25vw,\s*3\.5rem\)/s);
+  assert.match(indexCss, /\.hero-title\s*\{[^}]*font-size:\s*clamp\(1\.65rem,\s*2\.4vw,\s*2\.2rem\)[^}]*max-width:\s*min\(1120px,\s*100%\)/s);
+  assert.match(indexCss, /@media \(min-width:\s*901px\)[\s\S]*\.hero-title\s*\{[^}]*white-space:\s*nowrap/s);
+  assert.match(chatApp, /className="action-pill proposal-entry-button"/);
+  assert.match(chatApp, /PROJECT_OPTIONS\.slice\(0, 5\)/);
+  assert.match(chatApp, /PROJECT_OPTIONS\.slice\(5\)/);
+  assert.match(chatApp, /className="option-row option-row-portal"/);
+  assert.match(chatApp, /> Client Portal/);
+  assert.doesNotMatch(chatApp, /Access Client Portal|Access client proposal/);
+  assert.equal((projectOptions.match(/label:\s*"/g) || []).length, 11);
+  assert.match(indexCss, /\.option-row\s*\{[^}]*flex-wrap:\s*nowrap/s);
+  assert.match(indexCss, /@media \(min-width:\s*768px\) and \(max-width:\s*1100px\)/);
+  assert.match(indexCss, /@media \(max-width:\s*767px\)[\s\S]*\.option-row\s*\{\s*flex-wrap:\s*wrap/s);
+  assert.match(indexCss, /\.proposal-entry-button\s*\{[^}]*white-space:\s*nowrap/s);
   assert.match(indexCss, /\.chat-mic-btn\s*\{[^}]*width:\s*44px[^}]*height:\s*44px/s);
 });
 

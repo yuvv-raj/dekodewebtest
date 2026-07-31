@@ -16,6 +16,9 @@ test('classifies representative company questions without capturing general chat
     'What industries do you work in?',
     'What technologies do you use?',
     'Do you build AI agents?',
+    'Tell me about predictive AI',
+    'Can you help with process automation?',
+    'Do you provide systems integration?',
     'Why should I choose Dekode?',
   ];
   const generalQuestions = [
@@ -70,8 +73,43 @@ test('loads the generated knowledge object once', () => {
   assert.strictEqual(loadCompanyKnowledge(), loadCompanyKnowledge());
 });
 
+test('answers unsupported company facts directly instead of returning an overview', () => {
+  const founding = generateCompanyResponse(
+    'Did DEKODE company start yesterday?',
+    classifyCompanyIntent('Did DEKODE company start yesterday?'),
+  );
+  assert.match(founding.text, /does not list an exact founding date/i);
+  assert.match(founding.text, /why DEKODE was created/i);
+  assert.doesNotMatch(founding.text, /In short, DEKODE combines/i);
+
+  const leadership = generateCompanyResponse(
+    'Who is the CEO of DEKODE?',
+    classifyCompanyIntent('Who is the CEO of DEKODE?'),
+  );
+  assert.match(leadership.text, /does not name.*CEO/i);
+});
+
 test('does not invent a SaaS offering absent from the company profile', () => {
   const intent = classifyCompanyIntent('Do you build SaaS?');
   const response = generateCompanyResponse('Do you build SaaS?', intent);
   assert.match(response.text, /doesn’t specifically name SaaS/);
+});
+
+test('answers each new solution area with its specific approved knowledge', () => {
+  const questions = [
+    ['Tell me about generative AI', /internal copilots/i],
+    ['Do you build agentic AI?', /human oversight/i],
+    ['Can you help with predictive AI?', /forecasting/i],
+    ['Explain analytical AI', /business data/i],
+    ['Do you offer process automation?', /repetitive business processes/i],
+    ['Do you provide systems integration?', /custom APIs/i],
+    ['Can you help with cloud solutions?', /AWS, Azure, and Google Cloud Platform/i],
+  ];
+
+  for (const [question, expected] of questions) {
+    const intent = classifyCompanyIntent(question);
+    const response = generateCompanyResponse(question, intent);
+    assert.equal(intent.isCompanyRelated, true, question);
+    assert.match(response.text, expected, question);
+  }
 });

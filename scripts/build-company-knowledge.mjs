@@ -69,6 +69,12 @@ const matchOne = (source, pattern, label) => {
   return clean(match[1]);
 };
 
+const matchRaw = (source, pattern, label) => {
+  const match = source.match(pattern);
+  if (!match) throw new Error(`Could not extract ${label}`);
+  return match[1];
+};
+
 const extractServices = () => {
   const cards = [...entries.services.matchAll(
     /<div id="([^"]+)" className="service-detail-card"[\s\S]*?<h2 className="service-title">([\s\S]*?)<\/h2>[\s\S]*?<p className="service-lead">([\s\S]*?)<\/p>[\s\S]*?<div className="service-includes">([\s\S]*?)<\/div>[\s\S]*?<div className="service-for">[\s\S]*?<p>([\s\S]*?)<\/p>/g,
@@ -95,7 +101,7 @@ const extractProcess = () => {
 };
 
 const extractDifferences = () => {
-  const section = matchOne(
+  const section = matchRaw(
     entries.about,
     /<section className="about-different-section"[\s\S]*?<div className="differences-grid">([\s\S]*?)<\/section>/,
     'company differentiators',
@@ -103,6 +109,17 @@ const extractDifferences = () => {
   return [...section.matchAll(
     /<div className="difference-card"[\s\S]*?<h3>([\s\S]*?)<\/h3>\s*<p>([\s\S]*?)<\/p>/g,
   )].map(([, name, description]) => ({ name: clean(name), description: clean(description) }));
+};
+
+const extractOrigin = () => {
+  const section = matchRaw(
+    entries.about,
+    /<section className="about-why-section[\s\S]*?<div className="about-text-content">([\s\S]*?)<\/div>/,
+    'company origin',
+  );
+  return [...section.matchAll(/<p(?:\s+className="[^"]+")?>([\s\S]*?)<\/p>/g)]
+    .map((match) => clean(match[1]))
+    .join(' ');
 };
 
 const extractPrinciples = () => {
@@ -141,6 +158,7 @@ const knowledge = {
     name: 'DEKODE',
     about: matchOne(entries.about, /<p className="about-lead">([\s\S]*?)<\/p>/, 'about statement'),
     mission: matchOne(entries.about, /<h2 className="about-subheadline">([\s\S]*?)<\/h2>/, 'mission'),
+    origin: extractOrigin(),
     vision: matchOne(
       entries.about,
       /DEKODE is building toward becoming([\s\S]*?)<\/p>/,
