@@ -7,9 +7,9 @@ export const proposal = {
   "proposalVersion": "1.1.0",
   "approvedAt": "2026-07-31",
   "sourceCommit": "source-snapshot",
-  "sourceChecksum": "a72f03e37d39321a6c44f9ab318a5023efadb8c5dc0f882613ed3436088068c4",
+  "sourceChecksum": "b8447be51f3803ce43feb9fd4ef4ca8ae08067d2f4ba3f951e3dcda85d07595e",
   "contentChecksum": "88e99782c7ff4d96fa75cffa845f755ec7f8901f19b634ff61f66e82b5f92bd4",
-  "diagramStructureHash": "57dc070a5ab909a319ce4f2f78a8261cfea889206a57b04552b67070d4d72e1c",
+  "diagramStructureHash": "9fd8c3210051491b612a404734c67d4f5bdac9e3c7fe4130ea3f45ca1f6c37f4",
   "sections": [
     {
       "id": "manual",

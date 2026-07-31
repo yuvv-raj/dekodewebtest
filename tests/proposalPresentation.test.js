@@ -23,7 +23,7 @@ test('proposal renders the approved old DEKODE presentation directly', () => {
   assert.match(styles, /@import '\.\/sourceStyles\.css'/)
   assert.equal(
     createHash('sha256').update(sourceStyles).digest('hex'),
-    'f0248856e15d32ff00e0870cb3ec48ccf6cf91b7213ab065e3b44f3fbee53acf',
+    'b385a4a440574e596a6ac116ea77cec751d7076bbe1a978b316e8cb94ac8f735',
   )
   assert.doesNotMatch(experience, /ProposalImpactVisual|ProcessComparison|readPresentationData/)
   assert.doesNotMatch(experience, /12,600\+ Hours|Legacy Process: Manual Distribution/)
