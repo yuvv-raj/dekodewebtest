@@ -9,6 +9,14 @@ const normalise = (value) =>
 
 const knowledge = loadCompanyKnowledge();
 
+const findSolutionArea = (message) => {
+  const input = normalise(message);
+  return knowledge.solutionAreas.find((area) => {
+    const terms = [area.name, ...(area.aliases || [])].map(normalise);
+    return terms.some((term) => term.length > 3 && input.includes(term));
+  });
+};
+
 const topicTerms = Object.fromEntries(
   Object.entries(knowledge.aliases).map(([topic, aliases]) => [
     topic,
@@ -29,9 +37,12 @@ export function findTopic(message) {
     const terms = [item.name, ...item.capabilities].map(normalise);
     return terms.some((term) => term.length > 3 && input.includes(term));
   });
+  const solutionArea = findSolutionArea(message);
 
-  if (service && (!best.topic || best.score <= 1)) return { topic: 'services', service };
-  return { ...best, service };
+  if ((service || solutionArea) && (!best.topic || best.score <= 1)) {
+    return { topic: 'services', service, solutionArea };
+  }
+  return { ...best, service, solutionArea };
 }
 
 export function findNamedOffering(message) {
@@ -43,3 +54,5 @@ export function findNamedOffering(message) {
     return significantWords.some((word) => input.includes(word));
   });
 }
+
+export { findSolutionArea };

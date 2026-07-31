@@ -34,13 +34,17 @@ export function classifyCompanyIntent(message, context = {}) {
 
   const match = findTopic(text);
   const hasCompanyCue = COMPANY_CUES.some((pattern) => pattern.test(text));
+  const asksAboutSolution =
+    Boolean(match.solutionArea) &&
+    /\b(what is|tell me about|do you|can you|offer|provide|help with|explain)\b/i.test(text);
   const contextualFollowUp =
     context.isCompanyConversation &&
     (match.score > 0 || /^(what about|how about|and|also|tell me more|why|how|which|do you|can you)\b/i.test(text));
 
   return {
-    isCompanyRelated: hasCompanyCue || contextualFollowUp,
+    isCompanyRelated: hasCompanyCue || asksAboutSolution || contextualFollowUp,
     topic: match.topic || (contextualFollowUp ? context.lastTopic : null) || 'company',
     service: match.service,
+    solutionArea: match.solutionArea,
   };
 }

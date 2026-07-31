@@ -38,6 +38,14 @@ function makeDocuments() {
       label: service.name,
       text: `${service.name}: ${service.summary}\nCapabilities: ${joinItems(service.capabilities)}\nBest for: ${service.audience}`,
     })),
+    ...companyKnowledge.solutionAreas.map((area) => {
+      const service = companyKnowledge.services.find((item) => item.id === area.serviceId);
+      return {
+        id: `solution-${area.id}`,
+        label: area.name,
+        text: `${area.name}: ${area.summary}\nRelated DEKODE service: ${service?.name || 'DEKODE services'}.`,
+      };
+    }),
     {
       id: 'industries',
       label: 'Industries',

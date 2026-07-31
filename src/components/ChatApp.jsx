@@ -20,6 +20,10 @@ import { voiceConfig } from "../voice/config";
 import { BrowserSpeechToTextProvider } from "../voice/providers/browserSpeechToTextProvider";
 import { placeholderInterval, placeholderMessages } from "./chatComposerConfig";
 import {
+  findProjectOption,
+  PROJECT_OPTIONS,
+} from "../config/projectOptions";
+import {
   extractDomain,
   detectTone,
   extractTag,
@@ -44,14 +48,6 @@ import {
   subscribeToContentChat,
   subscribeToVoiceOpen,
 } from "../content/ContentToChatBridge";
-
-const PROJECT_OPTIONS = [
-  "Mobile App",
-  "Web Application",
-  "AI Agent",
-  "Cloud Infrastructure",
-  "E-commerce Platform",
-];
 
 function getTimeAwareGreeting(date = new Date()) {
   const hour = date.getHours();
@@ -250,10 +246,8 @@ export default function ChatApp({
       companyContextRef.current,
     );
 
-    const matchedOption = PROJECT_OPTIONS.find(
-      (opt) => opt === initialMessage || initialMessage.includes(opt),
-    );
-    const finalProjectType = matchedOption || "Custom Project";
+    const matchedOption = findProjectOption(initialMessage);
+    const finalProjectType = matchedOption?.label || "Custom Project";
 
     setProjectType(finalProjectType);
     setGatheredTags([finalProjectType]);
@@ -276,17 +270,7 @@ export default function ChatApp({
 
     setStep("gathering_audience");
 
-    const cleanName = finalProjectType.replace(/[^a-zA-Z ]/g, "").trim();
-    let initialQuestion = `Awesome, a ${finalProjectType.toLowerCase()} sounds exciting! Who is the primary audience or user base for this project?`;
-    if (finalProjectType.includes("AI")) {
-      initialQuestion =
-        "Awesome, an AI Agent sounds exciting! What specific tasks or workflows do you want this agent to automate for you?";
-    } else if (finalProjectType.includes("E-commerce")) {
-      initialQuestion =
-        "Awesome, an E-commerce Platform sounds exciting! What kind of products will you be selling, and who is your target market?";
-    }
-
-    simulateAiTyping(initialQuestion);
+    simulateAiTyping(matchedOption.openingQuestion);
   };
 
   const handleOptionSelect = (option) => {
@@ -522,12 +506,27 @@ export default function ChatApp({
       let nextQuestion =
         "Perfect. And do you have a specific timeline or deadline in mind for launching this?";
       let defaultTag = "Core Features";
-      if (projectType.includes("AI")) {
+      if (projectType === "Agentic AI") {
         nextQuestion =
           "Perfect. What's your ideal timeline for getting a prototype of this agent up and running?";
         defaultTag = "Tools Integrated";
+      } else if (projectType.includes("AI")) {
+        nextQuestion =
+          "Perfect. What's your ideal timeline for validating the first AI pilot or prototype?";
+        defaultTag = "AI Requirements";
+      } else if (
+        projectType === "Process Automation" ||
+        projectType === "Systems Integration"
+      ) {
+        nextQuestion =
+          "Perfect. When would you like the first workflow or integration to be live?";
+        defaultTag = "Systems Defined";
+      } else if (projectType === "Cloud Solutions") {
+        nextQuestion =
+          "Perfect. When would you like to reach the first cloud delivery milestone?";
+        defaultTag = "Cloud Requirements";
       } else if (projectType.includes("E-commerce")) {
-        nextQuestion = "Perfect. When are you aiming to launch your store?";
+        nextQuestion = "Perfect. When are you aiming to launch the store?";
         defaultTag = "Store Features";
       }
 
@@ -968,13 +967,13 @@ export default function ChatApp({
             {!proposalContext && (
               <>
                 <div className="options-container">
-                  {PROJECT_OPTIONS.map((opt) => (
+                  {PROJECT_OPTIONS.map((option) => (
                     <button
-                      key={opt}
+                      key={option.label}
                       className="action-pill"
-                      onClick={() => handleOptionSelect(opt)}
+                      onClick={() => handleOptionSelect(option.label)}
                     >
-                      {opt}
+                      {option.label}
                     </button>
                   ))}
                   {onOpenProposalAccess && (
@@ -983,7 +982,7 @@ export default function ChatApp({
                       className="action-pill proposal-entry-button"
                       onClick={onOpenProposalAccess}
                     >
-                      <LockKeyhole size={15} /> Access client proposal
+                      <LockKeyhole size={15} /> Access Client Portal
                     </button>
                   )}
                 </div>

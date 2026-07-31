@@ -99,6 +99,74 @@
       "audience": "Businesses that need their systems to be stable, secure, and professionally managed, without building a full in-house IT team."
     }
   ],
+  "solutionAreas": [
+    {
+      "id": "ai-strategy",
+      "name": "AI Strategy & Consulting",
+      "serviceId": "ai-strategy",
+      "summary": "DEKODE helps teams assess AI readiness, identify useful opportunities, prioritise use cases, review data and workflows, and build a responsible, vendor-neutral AI roadmap."
+    },
+    {
+      "id": "generative-ai",
+      "name": "Generative AI",
+      "serviceId": "custom-ai",
+      "summary": "DEKODE builds generative AI solutions tailored to business workflows, including internal copilots, intelligent search, knowledge systems, and AI-powered support and operations tools."
+    },
+    {
+      "id": "agentic-ai",
+      "name": "Agentic AI",
+      "serviceId": "custom-ai",
+      "summary": "DEKODE designs AI agents for defined business workflows, connecting them to approved tools, APIs, and knowledge while accounting for permissions, human oversight, privacy, safety, and governance."
+    },
+    {
+      "id": "predictive-ai",
+      "name": "Predictive AI",
+      "serviceId": "custom-ai",
+      "summary": "DEKODE develops custom machine learning solutions that use relevant business data to support forecasting, prioritisation, and better operational decisions. The right approach depends on the use case and data readiness."
+    },
+    {
+      "id": "analytical-ai",
+      "name": "Analytical AI",
+      "serviceId": "custom-ai",
+      "summary": "DEKODE applies AI and machine learning to business data to surface useful patterns and decision support, delivered through practical workflows, dashboards, or internal tools."
+    },
+    {
+      "id": "mobile-app",
+      "name": "Mobile App",
+      "serviceId": "web-mobile",
+      "summary": "DEKODE designs and develops iOS and Android mobile apps with user journeys, prototypes, accessible interfaces, integrations, security, and production-ready delivery."
+    },
+    {
+      "id": "web-app",
+      "name": "Web App",
+      "serviceId": "web-mobile",
+      "summary": "DEKODE builds web applications, dashboards, and internal portals around real user workflows, from UX and rapid prototyping through secure production delivery."
+    },
+    {
+      "id": "cloud-solutions",
+      "name": "Cloud Solutions",
+      "serviceId": "cloud-it",
+      "summary": "DEKODE provides cloud strategy, architecture, migration, monitoring, security hardening, and ongoing optimisation across AWS, Azure, and Google Cloud Platform."
+    },
+    {
+      "id": "process-automation",
+      "name": "Process Automation",
+      "serviceId": "integrations",
+      "summary": "DEKODE automates repetitive business processes across operations, finance, and support, connecting the required systems so information moves cleanly and teams spend less time on manual work."
+    },
+    {
+      "id": "systems-integration",
+      "name": "Systems Integration",
+      "serviceId": "integrations",
+      "summary": "DEKODE connects business systems through custom APIs and third-party integrations, including payment, chat, text, and email services, with reliable data flows and maintainable delivery."
+    },
+    {
+      "id": "ecommerce",
+      "name": "E-commerce",
+      "serviceId": "ecommerce",
+      "summary": "DEKODE builds scalable e-commerce platforms with intelligent search, personalised recommendations, inventory and fulfilment automation, payment integrations, and performance-focused user experiences."
+    }
+  ],
   "industries": [
     "education",
     "healthcare",

@@ -25,3 +25,18 @@ test('includes the old website origin story in company context', () => {
   const { context } = formatKnowledgeContext('Why was DEKODE started?');
   assert.match(context, /businesses that knew they needed to evolve/i);
 });
+
+test('retrieves focused knowledge for the new solution labels', () => {
+  const cases = [
+    ['How can agentic AI automate our workflow?', 'solution-agentic-ai'],
+    ['We need demand forecasting with predictive AI', 'solution-predictive-ai'],
+    ['Can you help with systems integration?', 'solution-systems-integration'],
+    ['Help with process automation for invoice approvals', 'solution-process-automation'],
+  ];
+
+  for (const [question, expectedId] of cases) {
+    const matches = retrieveCompanyKnowledge(question);
+    assert.ok(matches.some((match) => match.id === expectedId), question);
+    assert.ok(matches.length <= 5);
+  }
+});

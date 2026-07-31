@@ -1,5 +1,5 @@
 import { loadCompanyKnowledge } from './companyKnowledgeLoader.js';
-import { findNamedOffering } from './knowledgeIndex.js';
+import { findNamedOffering, findSolutionArea } from './knowledgeIndex.js';
 import { getPanelForTopic } from './visualPanelMapper.js';
 import { getSuggestedQuestions } from './suggestedQuestionGenerator.js';
 import { getKnowledgeGapResponse } from './knowledgeGapResponse.js';
@@ -7,8 +7,14 @@ import { getKnowledgeGapResponse } from './knowledgeGapResponse.js';
 const knowledge = loadCompanyKnowledge();
 const bullets = (items) => items.map((item) => `• ${item}`).join('\n');
 
-function responseForTopic(topic, message, detectedService) {
+function responseForTopic(topic, message, detectedService, detectedSolutionArea) {
   const service = detectedService || findNamedOffering(message);
+  const solutionArea = detectedSolutionArea || findSolutionArea(message);
+
+  if (solutionArea) {
+    const parentService = knowledge.services.find((item) => item.id === solutionArea.serviceId);
+    return `${solutionArea.name} is a DEKODE solution area. ${solutionArea.summary}\n\nIt sits within ${parentService?.name || 'DEKODE services'}. A useful first step is to define the users, desired outcome, available data or systems, and the safeguards the solution needs.`;
+  }
 
   if (/\bsaas\b/i.test(message) && !service) {
     const webService = knowledge.services.find((item) => item.id === 'web-mobile');
@@ -47,7 +53,7 @@ function responseForTopic(topic, message, detectedService) {
 export function generateCompanyResponse(message, intent) {
   const topic = intent.topic || 'company';
   const text = getKnowledgeGapResponse(message) ||
-    responseForTopic(topic, message, intent.service);
+    responseForTopic(topic, message, intent.service, intent.solutionArea);
   return {
     text,
     topic,
